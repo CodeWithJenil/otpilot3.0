@@ -1,0 +1,2 @@
+"""Generic IMAP provider infrastructure."""
+

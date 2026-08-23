@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otpilot"
+version = "0.1.0"
+description = "Local-first CLI for extracting one-time passwords from email accounts."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "OTPilot contributors" }]
+keywords = ["otp", "imap", "gmail", "cli", "privacy"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Communications :: Email",
+  "Topic :: Security",
+]
+dependencies = [
+  "imapclient>=3.0,<4.0",
+  "keyring>=25.0,<26.0",
+  "platformdirs>=4.2,<5.0",
+  "pydantic>=2.8,<3.0",
+  "pydantic-settings>=2.3,<3.0",
+  "pyperclip>=1.9,<2.0",
+  "pywin32>=306; sys_platform == 'win32'",
+  "rich>=13.7,<14.0",
+  "tomli-w>=1.0,<2.0",
+  "typer>=0.12,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.10,<2.0",
+  "pytest>=8.2,<9.0",
+  "ruff>=0.5,<1.0",
+]
+
+[project.scripts]
+otpilot = "otpilot.cli.app:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otpilot"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["otpilot"]
+

@@ -1,0 +1,2 @@
+"""Platform detection adapters."""
+
