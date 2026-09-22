@@ -59,6 +59,10 @@ Provider Registry
 
 Gmail lives in `src/otpilot/providers/gmail/` because Gmail owns defaults such as `imap.gmail.com`, SSL port `993`, and app-password documentation. IMAP transport lives in `src/otpilot/providers/imap/` because IMAP is reusable infrastructure for many email sources.
 
+Each IMAP authentication or retrieval operation opens a short-lived connection, authenticates,
+selects the configured mailbox read-only, and attempts logout in a `finally` block. Connections
+use a 30-second timeout by default; cleanup errors never replace the preceding transport error.
+
 ## Extraction Model
 
 OTPilot uses `OtpExtractor`, not an `OtpParser`.

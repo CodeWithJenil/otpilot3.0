@@ -4,7 +4,7 @@ This module owns IMAP transport concerns. Gmail, Outlook, Yahoo, Proton Bridge,
 and custom servers should configure this provider instead of duplicating transport code.
 """
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -25,6 +25,8 @@ from otpilot.domain.models import (
 )
 from otpilot.domain.search import SearchCriteria, SearchStrategy
 
+IMAP_OPERATION_ERRORS = (OSError, TimeoutError, IMAPClient.Error, IMAPClient.AbortError)
+
 
 @dataclass(frozen=True, slots=True)
 class ImapConnectionConfig:
@@ -32,6 +34,7 @@ class ImapConnectionConfig:
     port: int = 993
     ssl: bool = True
     mailbox: str = "INBOX"
+    timeout_seconds: float = 30.0
 
 
 def _received_at_sort_key(received_at: datetime | None) -> datetime:
@@ -68,24 +71,33 @@ class ImapProvider:
 
     @contextmanager
     def _client(self, username: str, app_password: str) -> Iterator[IMAPClient]:
+        client: IMAPClient | None = None
         try:
             client = IMAPClient(
                 self.connection.host,
                 port=self.connection.port,
                 use_uid=True,
                 ssl=self.connection.ssl,
+                timeout=self.connection.timeout_seconds,
             )
-        except Exception as exc:
+        except IMAP_OPERATION_ERRORS as exc:
             raise ImapTransportError("Unable to establish an IMAP connection.") from exc
         try:
-            client.login(username, app_password)
-            client.select_folder(self.connection.mailbox, readonly=True)
+            try:
+                client.login(username, app_password)
+            except IMAP_OPERATION_ERRORS as exc:
+                raise ImapTransportError("IMAP authentication failed.") from exc
+            try:
+                client.select_folder(self.connection.mailbox, readonly=True)
+            except IMAP_OPERATION_ERRORS as exc:
+                raise ImapTransportError("Unable to select the configured IMAP mailbox.") from exc
             yield client
-        except Exception as exc:
-            raise ImapTransportError("IMAP connection or authentication failed.") from exc
+        except IMAP_OPERATION_ERRORS as exc:
+            raise ImapTransportError("IMAP operation failed.") from exc
         finally:
-            with suppress(Exception):
-                client.logout()
+            if client is not None:
+                with suppress(Exception):
+                    client.logout()
 
     def authenticate(self, account_id: AccountId, username: str, app_password: str) -> None:
         del account_id
@@ -102,8 +114,12 @@ class ImapProvider:
                 message_ids = list(client.search(query.terms))
                 message_ids = list(reversed(message_ids))[: criteria.limit]
                 fetched = client.fetch(message_ids, [b"RFC822", b"INTERNALDATE"])
+                if not isinstance(fetched, Mapping):
+                    raise TypeError("IMAP fetch response is not a mapping.")
                 emails: list[ExtractableEmail] = []
                 for message_id, data in fetched.items():
+                    if not isinstance(data, Mapping):
+                        continue
                     try:
                         emails.append(self._to_extractable(account_id, message_id, data))
                     except (TypeError, ValueError):
@@ -116,14 +132,16 @@ class ImapProvider:
                     ),
                     reverse=True,
                 )
-            except Exception as exc:
+            except ImapTransportError:
+                raise
+            except (*IMAP_OPERATION_ERRORS, TypeError, ValueError) as exc:
                 raise ImapTransportError("IMAP search or message retrieval failed.") from exc
 
     def _to_extractable(
         self,
         account_id: AccountId,
         message_id: Any,
-        data: dict[Any, Any],
+        data: Mapping[Any, Any],
     ) -> ExtractableEmail:
         raw = data.get(b"RFC822") or data.get("RFC822")
         if not isinstance(raw, bytes):
