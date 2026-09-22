@@ -14,9 +14,21 @@ Confirm that the Windows credential backend is available and that the account us
 
 Temporary provider failures are retried by watch mode. Missing configuration or credentials are fatal and stop the command.
 
+Each IMAP authentication and search operation uses a separate connection with a 30-second timeout.
+OTPilot attempts logout after every opened connection, including when authentication, search, or
+message retrieval fails. Timeout, connection, authentication, mailbox, and protocol failures are
+reported without including credentials or email content.
+
 ## Clipboard copy does not work
 
 `otpilot fetch --copy` and `otpilot watch` require an operating-system clipboard backend supported by `pyperclip`.
+
+## Hotkey does not start or respond
+
+`otpilot hotkey` is supported only on Windows and requires the configured `pynput` package.
+Use a valid combination such as `ctrl+shift+o`, ensure no other program owns the combination,
+and run `otpilot login <email>` before starting the listener. A fetch failure is reported without
+stopping the listener; press `Ctrl+C` to stop it cleanly.
 
 ## Documentation looks stale
 

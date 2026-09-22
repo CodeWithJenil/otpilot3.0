@@ -13,6 +13,9 @@ Current model:
 - `credential_backend.backend`: credential backend. Default: `windows-credential-manager`.
 - `config_dir`: override for local config path. Default: platform-specific.
 - `poll_interval_seconds`: watch polling interval. Default: `30.0`; allowed range is greater than 0 and up to 3600 seconds.
+- `hotkey`: Windows global hotkey for `otpilot hotkey`. Default: `ctrl+shift+o`. It must be a
+  non-empty, plus-separated key combination with at least one modifier and a non-modifier key;
+  for example, `alt+f9`.
 
 Secrets are forbidden.
 
@@ -22,7 +25,6 @@ Preferences affect user experience.
 
 Current model:
 
-- `hotkey`: optional global hotkey.
 - `theme`: `system` by default.
 - `notifications_enabled`: `true` by default.
 - `auto_paste_enabled`: `false` by default.

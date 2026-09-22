@@ -46,3 +46,43 @@ def test_ambiguous_candidates_use_context_and_length() -> None:
     result = extractor().extract_best(make_email("Reference 123456. Security passcode: 918273."))
     assert result is not None
     assert result.value == "918273"
+
+
+def test_html_only_email_extracts_otp_and_ignores_markup() -> None:
+    email = make_email("", "Sign-in verification")
+    email = ExtractableEmail(
+        source=email.source,
+        sender=email.sender,
+        subject=email.subject,
+        text_body="",
+        html_body=(
+            "<p>Your verification code is <strong>482913</strong>.</p><script>123456</script>"
+        ),
+    )
+
+    result = extractor().extract_best(email)
+
+    assert result is not None
+    assert result.value == "482913"
+
+
+def test_unrelated_dates_orders_and_amounts_are_not_candidates() -> None:
+    result = extractor().extract_best(
+        make_email("Order 482913 was placed on 20240101. Amount: 1234.56.", "Order receipt")
+    )
+
+    assert result is None
+
+
+def test_reverse_otp_phrase_is_supported_without_matching_nearby_order_number() -> None:
+    result = extractor().extract_best(make_email("Order 123456. 482913 is your verification code."))
+
+    assert result is not None
+    assert result.value == "482913"
+
+
+def test_deterministic_tie_breaking_prefers_higher_numeric_value() -> None:
+    result = extractor().extract_best(make_email("Code: 482913. Code: 731284."))
+
+    assert result is not None
+    assert result.value == "731284"

@@ -43,5 +43,8 @@ class OtpExtractor:
     def extract_best(self, email: ExtractableEmail) -> OtpCandidate | None:
         candidates = self._candidate_generator.generate(email)
         scored = [self._candidate_scorer.score(email, candidate) for candidate in candidates]
-        return max(scored, key=lambda candidate: candidate.score, default=None)
-
+        return max(
+            scored,
+            key=lambda candidate: (candidate.score, candidate.value),
+            default=None,
+        )
