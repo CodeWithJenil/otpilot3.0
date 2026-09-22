@@ -3,7 +3,7 @@
 import typer
 
 from otpilot import __version__
-from otpilot.cli.commands import config, doctor, fetch, login, logout, watch
+from otpilot.cli.commands import config, doctor, fetch, hotkey, login, logout, watch
 
 app = typer.Typer(
     name="otpilot",
@@ -12,6 +12,7 @@ app = typer.Typer(
 )
 app.command("fetch")(fetch.command)
 app.command("watch")(watch.command)
+app.command("hotkey")(hotkey.command)
 app.command("login")(login.command)
 app.command("logout")(logout.command)
 app.command("config")(config.command)
@@ -26,4 +27,3 @@ def version() -> None:
 
 def main() -> None:
     app()
-

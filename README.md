@@ -14,7 +14,7 @@ The first supported provider target is Gmail via IMAP over SSL with Google App P
 
 ## Current Status
 
-The first working vertical slices are implemented: credential-backed Gmail IMAP fetching, OTP extraction, optional clipboard copying, and synchronous polling watch mode. Hotkeys, notifications, auto-paste, and update functionality remain deferred.
+The first working vertical slices are implemented: credential-backed Gmail IMAP fetching, OTP extraction, optional clipboard copying, synchronous polling watch mode, and a Windows global hotkey. Notifications, auto-paste, and update functionality remain deferred.
 
 ## CLI
 
@@ -22,6 +22,7 @@ The first working vertical slices are implemented: credential-backed Gmail IMAP 
 otpilot fetch
 otpilot fetch --copy
 otpilot watch
+otpilot hotkey
 otpilot login user@gmail.com
 otpilot logout user@gmail.com
 otpilot config
@@ -30,6 +31,20 @@ otpilot version
 ```
 
 See [docs/cli-reference.md](docs/cli-reference.md) for command behavior and documentation requirements.
+
+## Windows Global Hotkey
+
+On Windows, `otpilot hotkey` registers the system-wide `Ctrl+Shift+O` shortcut by default, so it
+works while another application has focus. Configure another supported combination in OTPilot's
+existing non-secret TOML configuration, for example:
+
+```toml
+hotkey = "alt+f9"
+```
+
+The Windows-only `pynput` dependency is installed automatically with OTPilot. Press `Ctrl+C` to
+unregister the hotkey and exit. Each invocation copies the OTP to the clipboard; OTPilot never
+prints it in hotkey mode and does **not** paste it automatically.
 
 ## Architecture
 

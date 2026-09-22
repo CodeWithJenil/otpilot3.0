@@ -57,10 +57,15 @@ Configuration belongs in `src/otpilot/config/` when it affects correctness or in
 
 Never add secret fields to either model.
 
+Global hotkey implementations belong under `infrastructure/hotkeys/` and implement the
+application `HotkeyListener` port. Application services must not import operating-system keyboard
+libraries directly.
+
 ## Testing Strategy
 
 - Unit tests for domain models, extraction, search, cache, and services.
+- OTP extraction tests must cover HTML-only messages, malformed body parts, competing messages,
+  sender/subject relevance, recency, and deterministic ties without using a live mailbox.
 - CLI tests for command registration and output behavior.
 - Security tests for redaction and config secret rejection.
 - No network tests in the default suite.
-

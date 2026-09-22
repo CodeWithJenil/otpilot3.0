@@ -67,12 +67,14 @@ The problem is not syntactic parsing. Emails contain unrelated text, order numbe
 
 ```text
 Email
-  -> Candidate generation
-  -> Candidate scoring
-  -> Best OTP
+  -> Candidate generation from plain text and HTML
+  -> Context, sender, and subject scoring
+  -> Deterministic best OTP selection
 ```
 
-The scaffold defines `CandidateGenerator`, `CandidateScorer`, `ExtractableEmail`, and `OtpExtractor`. The concrete extraction algorithm is deferred to a later phase.
+The extraction pipeline accepts common four-to-eight digit code formats only when they have
+nearby OTP context. It avoids bare order, invoice, date, and amount values, and uses sender,
+subject, score, message receipt time, and stable identifiers to select among candidates.
 
 ## Search Engine
 
@@ -109,7 +111,6 @@ Configuration affects correctness and platform integration:
 
 Preferences affect user experience:
 
-- hotkey
 - theme
 - notifications
 - auto paste
@@ -123,15 +124,15 @@ Secrets are not allowed in either model.
 Watch-mode internals are expected to compose:
 
 ```text
-Background Service
-  -> Hotkey Listener
-  -> Command Dispatcher
+HotkeyService
+  -> HotkeyListener port
   -> FetchOtpService
   -> ClipboardService
-  -> NotificationService
 ```
 
-This prevents watch mode from becoming a large command handler.
+The Windows `pynput` implementation remains in infrastructure, so the application layer has no
+direct dependency on its OS-specific hooks. This prevents command handlers from becoming large and
+keeps the listener replaceable in tests.
 
 ## State Management
 
@@ -194,4 +195,3 @@ Errors may include structured `ErrorContext`, but context must be non-secret.
 - Config separate from preferences: operational correctness and UX settings evolve independently.
 - Registry over hardcoded providers: future providers register without modifying CLI or core services.
 - Documentation gates changes: public behavior and docs must remain synchronized.
-

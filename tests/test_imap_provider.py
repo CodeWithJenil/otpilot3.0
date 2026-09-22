@@ -66,3 +66,23 @@ def test_imap_provider_converts_transport_failure(monkeypatch) -> None:
             make_provider().authenticate(AccountId("account"), "user@example.com", "app-password")
     finally:
         FakeClient.fail_login = False
+
+
+def test_imap_provider_handles_malformed_body_part_without_exposing_content(monkeypatch) -> None:
+    malformed = (
+        b"From: security@example.com\nSubject: Verification code\n"
+        b"Content-Type: text/plain; charset=unknown-charset\n\n482913"
+    )
+
+    class MalformedClient(FakeClient):
+        def fetch(self, messages, data):
+            return {1: {b"RFC822": malformed, b"INTERNALDATE": datetime.now(UTC)}}
+
+    monkeypatch.setattr(provider_module, "IMAPClient", MalformedClient)
+    provider = make_provider()
+    provider.authenticate(AccountId("account"), "user@example.com", "app-password")
+
+    emails = list(provider.search(AccountId("account"), SearchCriteria(unseen_only=False)))
+
+    assert len(emails) == 1
+    assert emails[0].text_body == ""

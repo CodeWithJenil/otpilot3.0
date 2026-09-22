@@ -7,7 +7,7 @@ and custom servers should configure this provider instead of duplicating transpo
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from email import policy
 from email.parser import BytesParser
 from typing import Any
@@ -32,6 +32,14 @@ class ImapConnectionConfig:
     port: int = 993
     ssl: bool = True
     mailbox: str = "INBOX"
+
+
+def _received_at_sort_key(received_at: datetime | None) -> datetime:
+    if received_at is None:
+        return datetime.min.replace(tzinfo=UTC)
+    if received_at.tzinfo is None:
+        return received_at.replace(tzinfo=UTC)
+    return received_at.astimezone(UTC)
 
 
 @dataclass(slots=True)
@@ -94,10 +102,20 @@ class ImapProvider:
                 message_ids = list(client.search(query.terms))
                 message_ids = list(reversed(message_ids))[: criteria.limit]
                 fetched = client.fetch(message_ids, [b"RFC822", b"INTERNALDATE"])
-                return [
-                    self._to_extractable(account_id, message_id, data)
-                    for message_id, data in fetched.items()
-                ]
+                emails: list[ExtractableEmail] = []
+                for message_id, data in fetched.items():
+                    try:
+                        emails.append(self._to_extractable(account_id, message_id, data))
+                    except (TypeError, ValueError):
+                        continue
+                return sorted(
+                    emails,
+                    key=lambda email: (
+                        _received_at_sort_key(email.source.received_at),
+                        email.source.message_id,
+                    ),
+                    reverse=True,
+                )
             except Exception as exc:
                 raise ImapTransportError("IMAP search or message retrieval failed.") from exc
 
@@ -116,7 +134,10 @@ class ImapProvider:
         for part in message.walk():
             if part.is_multipart():
                 continue
-            content = part.get_content()
+            try:
+                content = part.get_content()
+            except (LookupError, TypeError, ValueError):
+                continue
             if not isinstance(content, str):
                 continue
             if part.get_content_type() == "text/html":

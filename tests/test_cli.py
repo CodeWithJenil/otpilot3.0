@@ -1,7 +1,7 @@
 from typer.testing import CliRunner
 
 from otpilot.cli.app import app
-from otpilot.cli.commands import fetch, watch
+from otpilot.cli.commands import fetch, hotkey, watch
 from otpilot.domain.models import AccountId, EmailMessageRef, OtpCandidate, OtpResult, ProviderId
 
 candidate = OtpCandidate(
@@ -62,3 +62,35 @@ def test_watch_command_invokes_watch_service(monkeypatch) -> None:
 
     assert result.exit_code == 0
     assert called is True
+
+
+def test_hotkey_command_invokes_hotkey_service(monkeypatch) -> None:
+    called = False
+
+    class FakeService:
+        hotkey = "ctrl+shift+o"
+
+        def run(self) -> None:
+            nonlocal called
+            called = True
+
+    monkeypatch.setattr(hotkey, "build_hotkey_service", lambda: FakeService())
+    result = CliRunner().invoke(app, ["hotkey"])
+
+    assert result.exit_code == 0
+    assert result.stdout == ""
+    assert called is True
+
+
+def test_hotkey_command_handles_fatal_error(monkeypatch) -> None:
+    from otpilot.domain.errors import BackgroundServiceError
+
+    monkeypatch.setattr(
+        hotkey,
+        "build_hotkey_service",
+        lambda: (_ for _ in ()).throw(BackgroundServiceError("unavailable")),
+    )
+    result = CliRunner().invoke(app, ["hotkey"])
+
+    assert result.exit_code == 1
+    assert result.stderr.strip() == "unavailable"

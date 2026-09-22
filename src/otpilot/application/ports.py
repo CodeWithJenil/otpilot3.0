@@ -1,5 +1,6 @@
 """Application-layer ports implemented by infrastructure adapters."""
 
+from collections.abc import Callable
 from typing import Protocol
 
 from otpilot.config.models import AppConfig
@@ -45,6 +46,19 @@ class OtpCache(Protocol):
 class Clipboard(Protocol):
     def copy(self, value: str) -> None:
         """Copy a value into the local clipboard."""
+
+
+class HotkeyListener(Protocol):
+    """Register a global hotkey through a platform-specific adapter."""
+
+    def register(self, hotkey: str, callback: Callable[[], None]) -> None:
+        """Register the callback for a hotkey."""
+
+    def run(self) -> None:
+        """Block until the listener is interrupted."""
+
+    def shutdown(self) -> None:
+        """Unregister the hotkey and release listener resources."""
 
 
 class NotificationSink(Protocol):

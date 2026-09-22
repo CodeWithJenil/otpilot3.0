@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -106,3 +107,49 @@ def test_fetch_service_surfaces_clipboard_failure() -> None:
 
     with pytest.raises(ClipboardError, match="Unable to copy"):
         service.fetch(SearchCriteria(unseen_only=False), copy_to_clipboard=True)
+
+
+def test_fetch_service_prefers_relevant_sender_and_subject_over_unrelated_email() -> None:
+    service, provider = make_service()
+    now = datetime.now(UTC)
+    provider.search = lambda account_id, criteria: [  # type: ignore[method-assign]
+        ExtractableEmail(
+            EmailMessageRef(ProviderId("gmail"), account_id, "1", now),
+            "orders@example.com",
+            "Order receipt",
+            "Your code is 111222.",
+        ),
+        ExtractableEmail(
+            EmailMessageRef(ProviderId("gmail"), account_id, "2", now - timedelta(minutes=1)),
+            "security@example.com",
+            "Verification code",
+            "Your code is 222333.",
+        ),
+    ]
+
+    result = service.fetch(SearchCriteria(unseen_only=False))
+
+    assert result.candidate.value == "222333"
+
+
+def test_fetch_service_prefers_newer_candidate_when_scores_are_equal() -> None:
+    service, provider = make_service()
+    now = datetime.now(UTC)
+    provider.search = lambda account_id, criteria: [  # type: ignore[method-assign]
+        ExtractableEmail(
+            EmailMessageRef(ProviderId("gmail"), account_id, "older", now - timedelta(minutes=2)),
+            "security@example.com",
+            "Verification code",
+            "Your code is 111222.",
+        ),
+        ExtractableEmail(
+            EmailMessageRef(ProviderId("gmail"), account_id, "newer", now),
+            "security@example.com",
+            "Verification code",
+            "Your code is 222333.",
+        ),
+    ]
+
+    result = service.fetch(SearchCriteria(unseen_only=False))
+
+    assert result.candidate.value == "222333"

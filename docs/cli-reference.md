@@ -33,7 +33,18 @@ WatchService
   -> ClipboardService
 ```
 
-Watch mode does not implement hotkeys, notifications, auto-paste, or daemon management.
+Watch mode does not implement notifications, auto-paste, or daemon management.
+
+## `otpilot hotkey`
+
+Listen for the configured Windows global hotkey, fetch the latest OTP, and copy it to the
+system clipboard. The default hotkey is `Ctrl+Shift+O`; press `Ctrl+C` to stop and unregister
+it cleanly. Each successful trigger reports `OTP copied to clipboard.` without printing the OTP.
+
+Hotkey listening is currently supported only on Windows. It uses the Windows-only `pynput`
+dependency, installed automatically with OTPilot. Fetch and clipboard failures are reported and
+leave the listener active. Repeated presses while a fetch is already in progress are ignored. The
+command copies an OTP but never prints or automatically pastes it.
 
 ## `otpilot login <email>`
 
