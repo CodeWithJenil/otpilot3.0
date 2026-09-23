@@ -3,9 +3,12 @@
 .mypy_cache/
 .pytest_cache/
 .venv/
+.tox/
 dist/
 build/
 *.egg-info/
 __pycache__/
 *.py[cod]
-
+.env
+*.whl
+*.tar.gz

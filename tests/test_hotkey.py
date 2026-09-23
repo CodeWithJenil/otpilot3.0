@@ -152,9 +152,18 @@ def test_hotkey_trigger_ignores_repeated_trigger_while_active() -> None:
 
 
 def test_pynput_listener_rejects_unsupported_platform(monkeypatch) -> None:
-    monkeypatch.setattr("otpilot.infrastructure.hotkeys.pynput_adapter.sys.platform", "linux")
+    monkeypatch.setattr("otpilot.infrastructure.hotkeys.pynput_adapter.sys.platform", "freebsd")
 
-    with pytest.raises(BackgroundServiceError, match="only on Windows"):
+    with pytest.raises(BackgroundServiceError, match="not supported on this platform"):
+        PynputHotkeyListener().register("ctrl+shift+o", lambda: None)
+
+
+def test_pynput_listener_rejects_wayland(monkeypatch) -> None:
+    monkeypatch.setattr("otpilot.infrastructure.hotkeys.pynput_adapter.sys.platform", "linux")
+    monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
+    monkeypatch.delenv("DISPLAY", raising=False)
+
+    with pytest.raises(BackgroundServiceError, match="Wayland is not supported"):
         PynputHotkeyListener().register("ctrl+shift+o", lambda: None)
 
 

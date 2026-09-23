@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0
+
+- First PyPI public release (`pip install otpilot`).
+- Cross-platform support for Windows, macOS, and Linux X11.
+- Standardized credential backend using system `keyring` (macOS Keychain, Linux Secret Service, Windows Credential Manager).
+- Security hardening: `otpilot fetch --copy` copies OTP to clipboard without printing the value to terminal output.
+- Packaging improvements: PEP 517/518 build setup, CI/CD GitHub Actions workflows, PyPI metadata and classifiers.
+
 ## 0.1.0
 
 - Added architecture scaffold.

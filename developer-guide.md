@@ -11,6 +11,9 @@ src/otpilot/
     imap/              Generic IMAP transport and search strategy
     gmail/             Gmail defaults layered on generic IMAP
   infrastructure/      OS and third-party adapters
+    credentials/       keyring_store.py (system keyring credential store)
+    hotkeys/           Cross-platform pynput listener adapter
+    clipboard/         pyperclip clipboard adapter
   config/              Non-secret application configuration models
   preferences/         User preference models
   state/               Future state store implementations

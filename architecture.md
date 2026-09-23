@@ -4,7 +4,7 @@
 
 OTPilot fetches OTPs from email accounts. Gmail is the first supported provider target, but the architecture treats Gmail as configuration on top of a generic IMAP transport.
 
-The system is Windows-first and local-only. macOS and Linux support are future targets through platform-specific infrastructure adapters.
+The system is cross-platform (supporting Windows, macOS, and Linux X11) and local-only.
 
 ## Layered Design
 
@@ -24,9 +24,11 @@ Providers
   provider registry, generic IMAP provider, Gmail IMAP configuration
 
 Infrastructure
-  Windows Credential Manager, config storage, preferences storage,
+  KeyringCredentialStore, config storage, preferences storage,
   clipboard, hotkeys, notifications, logging, platform detection
 ```
+
+Note that `otpilot config` and `otpilot doctor` are scaffolded commands in current versions.
 
 ## Dependency Rule
 
@@ -119,13 +121,13 @@ Preferences affect user experience:
 - notifications
 - auto paste
 
-Secrets are not allowed in either model.
+Secrets are not allowed in either model. Note that `otpilot config` and `otpilot doctor` remain scaffolded commands.
 
-## Background Service
+## Background Service & Hotkeys
 
 `otpilot watch` is a thin CLI entrypoint over `WatchService`.
 
-Watch-mode internals are expected to compose:
+Watch-mode and hotkey internals compose:
 
 ```text
 HotkeyService
@@ -134,9 +136,12 @@ HotkeyService
   -> ClipboardService
 ```
 
-The Windows `pynput` implementation remains in infrastructure, so the application layer has no
-direct dependency on its OS-specific hooks. This prevents command handlers from becoming large and
-keeps the listener replaceable in tests.
+Global hotkey listening is implemented using a cross-platform `pynput` adapter in infrastructure (`KeyringCredentialStore` and `pynput` listener implementations stay in infrastructure, so the application layer has no direct dependency on OS-specific hooks).
+
+- **macOS**: Requires Accessibility permissions for hotkey capturing.
+- **Linux**: Supported on X11 display servers (Wayland is unsupported).
+
+This keeps command handlers testable and keeps the listener replaceable in tests.
 
 ## State Management
 
@@ -154,14 +159,9 @@ Commands and services should use this model instead of scattering status checks.
 
 Authentication uses IMAP over SSL with provider app passwords. OAuth is out of scope.
 
-V1 credential storage target:
+Credential storage target:
 
-- Windows Credential Manager
-
-Future credential storage targets:
-
-- macOS Keychain
-- Linux Secret Service
+- `KeyringCredentialStore` backed by the system `keyring` (macOS Keychain, Windows Credential Manager, Linux Secret Service).
 
 Credential values must never be stored in config files, preferences, logs, errors, tests, or documentation examples.
 
@@ -198,4 +198,5 @@ Errors may include structured `ErrorContext`, but context must be non-secret.
 - Cache before refresh: hotkeys and repeated fetches need low latency.
 - Config separate from preferences: operational correctness and UX settings evolve independently.
 - Registry over hardcoded providers: future providers register without modifying CLI or core services.
+- System keyring backend: standard `keyring` library provides cross-platform secure credential storage.
 - Documentation gates changes: public behavior and docs must remain synchronized.

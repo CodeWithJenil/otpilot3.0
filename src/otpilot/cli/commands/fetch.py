@@ -7,7 +7,7 @@ from otpilot.domain.extraction import OtpExtractor
 from otpilot.domain.otp import ContextOtpCandidateScorer, EmailOtpCandidateGenerator
 from otpilot.infrastructure.clipboard.pyperclip_adapter import PyperclipClipboard
 from otpilot.infrastructure.config_storage.toml import TomlConfigurationRepository
-from otpilot.infrastructure.credentials.windows import WindowsCredentialManagerStore
+from otpilot.infrastructure.credentials.keyring_store import KeyringCredentialStore
 from otpilot.providers.registry import build_provider_registry
 
 
@@ -15,7 +15,7 @@ def build_service() -> FetchOtpService:
     return FetchOtpService(
         providers=build_provider_registry(),
         cache=InMemoryOtpCache(),
-        credentials=WindowsCredentialManagerStore(),
+        credentials=KeyringCredentialStore(),
         config=TomlConfigurationRepository(),
         extractor=OtpExtractor(EmailOtpCandidateGenerator(), ContextOtpCandidateScorer()),
         clipboard=PyperclipClipboard(),
@@ -32,7 +32,6 @@ def command(
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=1) from exc
     if copy:
-        typer.echo(f"OTP: {result.candidate.value}")
-        typer.echo("Copied to clipboard.")
+        typer.echo("OTP copied to clipboard.")
     else:
         typer.echo(result.candidate.value)

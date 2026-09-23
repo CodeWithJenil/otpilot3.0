@@ -5,14 +5,11 @@
 - `typer`: CLI command framework.
 - `rich`: terminal output formatting.
 - `pydantic`: typed config and preference models.
-- `pydantic-settings`: future settings loading support.
 - `platformdirs`: platform-correct local app paths.
-- `keyring`: cross-platform credential backend abstraction.
-- `pywin32`: Windows Credential Manager support target.
+- `keyring`: cross-platform system credential vault integration (macOS Keychain, Windows Credential Manager, Linux Secret Service).
 - `imapclient`: IMAP over SSL client.
 - `pyperclip`: clipboard integration target.
-- `pynput`: Windows global hotkey registration for `otpilot hotkey`; declared only on Windows
-  to keep its OS-specific hook implementation outside the application core.
+- `pynput`: cross-platform global hotkey listener for `otpilot hotkey` (Windows, macOS, Linux X11).
 - `tomli-w`: TOML config writing target.
 
 ## Development

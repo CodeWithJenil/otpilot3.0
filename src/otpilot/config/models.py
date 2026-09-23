@@ -10,9 +10,9 @@ def _validate_hotkey(value: str) -> str:
     parts = [part.strip().lower() for part in value.split("+")]
     if not value.strip() or any(not part for part in parts):
         raise ValueError("Hotkey must not be empty.")
-    aliases = {"control": "ctrl", "windows": "win"}
+    aliases = {"control": "ctrl", "windows": "win", "command": "cmd"}
     normalized = [aliases.get(part, part) for part in parts]
-    modifiers = {"alt", "ctrl", "shift", "win"}
+    modifiers = {"alt", "ctrl", "shift", "win", "cmd"}
     if len(normalized) < 2 or normalized[-1] in modifiers:
         raise ValueError("Hotkey must include one or more modifiers and a non-modifier key.")
     if any(part not in modifiers for part in normalized[:-1]) or len(set(normalized)) != len(
@@ -38,7 +38,7 @@ class ProviderConfig(BaseModel):
 class CredentialBackendConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    backend: str = "windows-credential-manager"
+    backend: str = "keyring"
 
 
 class AppConfig(BaseModel):

@@ -4,17 +4,29 @@ OTPilot is a local-first CLI application for fetching one-time passwords from em
 
 The first supported provider target is Gmail via IMAP over SSL with Google App Passwords. The architecture is intentionally not Gmail-specific: Gmail is a provider configuration layered on a generic IMAP transport so Outlook, Yahoo, Proton Bridge, and custom IMAP servers can be added without changing the CLI or application services.
 
+OTPilot is available on PyPI:
+```bash
+pip install otpilot
+```
+
+## Platform Support
+
+OTPilot supports cross-platform execution on:
+- **Windows**
+- **macOS**
+- **Linux X11** (*Wayland is unsupported*)
+
 ## Product Principles
 
 - Local only: no server, hosted API, relay, sync service, or cloud dependency.
 - No telemetry: OTPilot does not collect usage, diagnostics, crash reports, or analytics.
 - No OAuth: email access uses IMAP over SSL and provider-specific app passwords.
-- Secure credentials: passwords are stored in the operating system credential vault, never config files.
+- Secure credentials: passwords are stored in the operating system credential vault via `keyring` (macOS Keychain, Windows Credential Manager, Linux Secret Service), never in config files.
 - Documentation first: public behavior is incomplete unless docs are updated with code.
 
 ## Current Status
 
-The first working vertical slices are implemented: credential-backed Gmail IMAP fetching, OTP extraction, optional clipboard copying, synchronous polling watch mode, and a Windows global hotkey. Notifications, auto-paste, and update functionality remain deferred.
+Version 3.0.0 is released on PyPI. It features credential-backed Gmail IMAP fetching, candidate-based OTP extraction, optional clipboard copying via `otpilot fetch --copy` (which copies the OTP to the clipboard without printing it to terminal output), synchronous polling watch mode, and cross-platform global hotkey support.
 
 ## CLI
 
@@ -30,21 +42,27 @@ otpilot doctor
 otpilot version
 ```
 
-See [docs/cli-reference.md](docs/cli-reference.md) for command behavior and documentation requirements.
+See [docs/cli-reference.md](docs/cli-reference.md) for command behavior and documentation details. Note that `otpilot config` and `otpilot doctor` are scaffolded commands.
 
-## Windows Global Hotkey
+## Global Hotkey
 
-On Windows, `otpilot hotkey` registers the system-wide `Ctrl+Shift+O` shortcut by default, so it
-works while another application has focus. Configure another supported combination in OTPilot's
-existing non-secret TOML configuration, for example:
+`otpilot hotkey` registers a system-wide hotkey using a cross-platform `pynput` adapter so it works while another application has focus:
+- **Windows & Linux (X11)**: `Ctrl+Shift+O` by default.
+- **macOS**: `Cmd+Shift+O` or `Ctrl+Shift+O` by default.
+
+Configure another supported combination in OTPilot's non-secret TOML configuration file, for example:
 
 ```toml
-hotkey = "alt+f9"
+hotkey = "cmd+shift+o"
 ```
 
-The Windows-only `pynput` dependency is installed automatically with OTPilot. Press `Ctrl+C` to
-unregister the hotkey and exit. Each invocation copies the OTP to the clipboard; OTPilot never
-prints it in hotkey mode and does **not** paste it automatically.
+*Note:* On macOS, Accessibility permissions are required for hotkey capturing. On Linux, only X11 display servers are supported (Wayland is unsupported).
+
+Press `Ctrl+C` to unregister the hotkey and exit. Each invocation copies the OTP to the clipboard; OTPilot never prints it in hotkey mode and does **not** paste it automatically.
+
+## Privacy Guarantee (`fetch --copy`)
+
+When using `otpilot fetch --copy` or running in hotkey mode, OTPilot copies the extracted OTP directly to your system clipboard without printing the value to terminal output.
 
 ## Architecture
 
@@ -73,7 +91,7 @@ See [architecture.md](architecture.md) for the complete architecture, dependency
 
 ## Documentation
 
-- [installation.md](installation.md): local installation and development setup.
+- [installation.md](installation.md): installation and development setup.
 - [architecture.md](architecture.md): boundaries, dependency graph, and decisions.
 - [developer-guide.md](developer-guide.md): engineering workflow and testing.
 - [contributing.md](contributing.md): contribution requirements.

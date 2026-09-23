@@ -1,60 +1,58 @@
 # Roadmap
 
-## Phase 1: Architecture Scaffold
+## Phase 1: Architecture Scaffold (Completed in v3.0.0)
 
-- Package layout.
-- CLI command surfaces.
-- Application services.
-- Domain contracts.
-- Generic IMAP provider boundary.
-- Gmail provider configuration.
-- Search strategy boundary.
-- Extraction pipeline boundary.
-- Short-lived cache boundary.
-- Config and preference separation.
-- Documentation system.
+- [x] Package layout.
+- [x] CLI command surfaces.
+- [x] Application services.
+- [x] Domain contracts.
+- [x] Generic IMAP provider boundary.
+- [x] Gmail provider configuration.
+- [x] Search strategy boundary.
+- [x] Extraction pipeline boundary.
+- [x] Short-lived cache boundary.
+- [x] Config and preference separation.
+- [x] Documentation system.
 
-## Phase 2: Local Configuration and Credentials
+## Phase 2: Local Configuration and Credentials (Completed in v3.0.0)
 
-- Config file loading and saving.
-- Preference file loading and saving.
-- Windows Credential Manager integration.
-- `otpilot login`.
-- `otpilot logout`.
-- credential redaction tests.
+- [x] Config file loading and saving.
+- [x] Preference file loading and saving.
+- [x] System credential vault integration via `keyring` (macOS Keychain, Windows Credential Manager, Linux Secret Service).
+- [x] `otpilot login`.
+- [x] `otpilot logout`.
+- [x] credential redaction tests.
 
-## Phase 3: Gmail via IMAP
+## Phase 3: Gmail via IMAP (Completed in v3.0.0)
 
-- IMAP SSL connection.
-- app-password authentication.
-- IMAP search query execution.
-- limited email download.
-- resilient provider errors.
-- `otpilot doctor` provider diagnostics.
+- [x] IMAP SSL connection.
+- [x] app-password authentication.
+- [x] IMAP search query execution.
+- [x] limited email download.
+- [x] resilient provider errors.
+- [x] provider diagnostics boundary (`otpilot doctor` scaffold).
 
-## Phase 4: OTP Extraction
+## Phase 4: OTP Extraction (Completed in v3.0.0)
 
-- candidate generation.
-- candidate scoring.
-- best OTP selection.
-- expiry handling.
-- false-positive tests.
+- [x] candidate generation.
+- [x] candidate scoring.
+- [x] best OTP selection.
+- [x] expiry handling.
+- [x] false-positive tests.
 
-## Phase 5: Watch Mode
+## Phase 5: Watch Mode and Global Hotkey (Completed in v3.0.0)
 
-- background service.
-- hotkey listener.
-- command dispatcher.
-- short TTL cache.
-- clipboard integration.
-- local notifications.
+- [x] background service.
+- [x] cross-platform hotkey listener via `pynput`.
+- [x] command dispatcher.
+- [x] short TTL cache.
+- [x] clipboard integration (`otpilot fetch --copy`).
+- [x] local notifications boundary.
 
-## Phase 6: Additional Providers and Platforms
+## Phase 6: Additional Providers and Platforms (Future / Planned)
 
-- custom IMAP provider.
-- Outlook IMAP configuration.
-- Yahoo IMAP configuration.
-- Proton Bridge configuration.
-- macOS Keychain.
-- Linux Secret Service.
-
+- [ ] custom IMAP provider.
+- [ ] Outlook IMAP configuration.
+- [ ] Yahoo IMAP configuration.
+- [ ] Proton Bridge configuration.
+- [ ] Wayland support for Linux.
