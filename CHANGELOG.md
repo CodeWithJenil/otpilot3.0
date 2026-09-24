@@ -7,6 +7,10 @@
 - Standardized credential backend using system `keyring` (macOS Keychain, Linux Secret Service, Windows Credential Manager).
 - Security hardening: `otpilot fetch --copy` copies OTP to clipboard without printing the value to terminal output.
 - Packaging improvements: PEP 517/518 build setup, CI/CD GitHub Actions workflows, PyPI metadata and classifiers.
+- Implemented `otpilot config` with subcommands: `get`, `set`, `path`, `reset` for non-secret configuration and preference management.
+- Implemented `otpilot doctor` with comprehensive diagnostics across Environment, Configuration, Credentials, Connectivity, Clipboard, Hotkeys, and Dependencies.
+- Added comprehensive test coverage for `config` and `doctor` CLI commands.
+- Updated documentation: CLI reference, configuration guide, and troubleshooting guide.
 
 ## 0.1.0
 

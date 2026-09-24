@@ -42,7 +42,7 @@ otpilot doctor
 otpilot version
 ```
 
-See [docs/cli-reference.md](docs/cli-reference.md) for command behavior and documentation details. Note that `otpilot config` and `otpilot doctor` are scaffolded commands.
+See [docs/cli-reference.md](docs/cli-reference.md) for command behavior and documentation details.
 
 ## Global Hotkey
 

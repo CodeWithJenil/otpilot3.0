@@ -5,21 +5,16 @@ Supports Windows, macOS, and Linux X11. Wayland is not supported because
 registration time and raises a clear error.
 """
 
-import os
 import sys
 from collections.abc import Callable
 from contextlib import suppress
 from typing import Any
 
 from otpilot.domain.errors import BackgroundServiceError
-
-_SUPPORTED_PLATFORMS = {"win32", "darwin", "linux"}
-
-
-def _is_wayland() -> bool:
-    return os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland" and not os.environ.get(
-        "DISPLAY"
-    )
+from otpilot.infrastructure.platform.environment import (
+    SUPPORTED_HOTKEY_PLATFORMS,
+    is_wayland_without_x11,
+)
 
 
 class PynputHotkeyListener:
@@ -38,11 +33,11 @@ class PynputHotkeyListener:
         self._listener: Any | None = None
 
     def register(self, hotkey: str, callback: Callable[[], None]) -> None:
-        if sys.platform not in _SUPPORTED_PLATFORMS:
+        if sys.platform not in SUPPORTED_HOTKEY_PLATFORMS:
             raise BackgroundServiceError(
                 f"Global hotkeys are not supported on this platform ({sys.platform})."
             )
-        if sys.platform == "linux" and _is_wayland():
+        if sys.platform == "linux" and is_wayland_without_x11():
             raise BackgroundServiceError(
                 "Global hotkeys require X11. Wayland is not supported by the"
                 " underlying pynput library. Set DISPLAY or use X11/XWayland."

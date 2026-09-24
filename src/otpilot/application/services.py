@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from threading import Lock
 from time import sleep
 
+from otpilot.application.doctor import DoctorService
 from otpilot.application.ports import (
     Clipboard,
     ConfigurationRepository,
@@ -14,8 +15,8 @@ from otpilot.application.ports import (
     HotkeyListener,
     NotificationSink,
     OtpCache,
-    PreferencesRepository,
 )
+from otpilot.application.settings import SettingsService
 from otpilot.domain.errors import (
     ClipboardError,
     CredentialError,
@@ -27,7 +28,18 @@ from otpilot.domain.extraction import OtpExtractor
 from otpilot.domain.models import AccountId, OtpResult, ProviderId
 from otpilot.domain.providers import ProviderRegistry
 from otpilot.domain.search import SearchCriteria
-from otpilot.domain.state import RuntimeState
+
+__all__ = [
+    "ClipboardService",
+    "DoctorService",
+    "FetchOtpService",
+    "HotkeyService",
+    "LoginService",
+    "LogoutService",
+    "NotificationService",
+    "SettingsService",
+    "WatchService",
+]
 
 
 def _received_at_sort_key(received_at: datetime | None) -> datetime:
@@ -220,25 +232,6 @@ class LogoutService:
 
     def logout(self, account: str) -> None:
         self.credentials.delete_app_password(AccountId(account))
-
-
-@dataclass(slots=True)
-class SettingsService:
-    config: ConfigurationRepository
-    preferences: PreferencesRepository
-
-
-@dataclass(slots=True)
-class DoctorService:
-    config: ConfigurationRepository
-
-    def inspect(self) -> RuntimeState:
-        return RuntimeState(
-            authenticated=False,
-            connected=False,
-            background_running=False,
-            provider_available=False,
-        )
 
 
 @dataclass(slots=True)

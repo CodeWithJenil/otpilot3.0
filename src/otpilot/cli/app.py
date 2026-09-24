@@ -15,7 +15,7 @@ app.command("watch")(watch.command)
 app.command("hotkey")(hotkey.command)
 app.command("login")(login.command)
 app.command("logout")(logout.command)
-app.command("config")(config.command)
+app.add_typer(config.app, name="config")
 app.command("doctor")(doctor.command)
 
 

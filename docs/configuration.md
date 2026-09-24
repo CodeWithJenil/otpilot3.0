@@ -17,21 +17,84 @@ Current model:
 
 Secrets are forbidden in configuration files.
 
-Note that `otpilot config` is currently a scaffolded command.
-
 ## Preferences
 
 Preferences affect user experience.
 
 Current model:
 
-- `theme`: `system` by default.
-- `notifications_enabled`: `true` by default.
-- `auto_paste_enabled`: `false` by default.
+- `theme`: `system` by default. Options: `system`, `light`, `dark`.
+- `notifications_enabled`: `true` by default. Boolean.
+- `auto_paste_enabled`: `false` by default. Boolean.
+
+## Interactive Configuration UI
+
+Run `otpilot config` in a terminal to launch an interactive keyboard-navigable
+interface:
+
+- **Navigation**: ↑/↓ to move between settings, Enter to edit, Esc to cancel,
+  q or Esc (at top level) to exit.
+- **Boolean/Enum settings**: Selection dialog with arrow keys.
+- **Text/Numeric settings**: Input field with current value prefilled.
+- **Hotkey capture**: Press Enter on the hotkey row, then physically press the
+  desired key combination. The detected combination is displayed and normalized.
+  Enter confirms, Esc cancels.
+- **Restore Defaults**: Navigate to the action at the bottom, confirm in dialog.
+
+Use `otpilot config --non-interactive` (or `-n`) for scriptable read-only output.
 
 ## Storage
 
-Configuration is stored as non-secret TOML under the platform-specific OTPilot config directory. Credentials remain in the operating system credential vault via `keyring`.
+Configuration is stored as non-secret TOML under the platform-specific OTPilot
+config directory. Credentials remain in the operating system credential vault
+via `keyring`.
+
+### Platform Config Paths
+
+| Platform | Config Directory                                   |
+| -------- | -------------------------------------------------- |
+| Linux    | `~/.config/otpilot/` (respects `$XDG_CONFIG_HOME`) |
+| macOS    | `~/Library/Application Support/otpilot/`           |
+| Windows  | `%APPDATA%\otpilot\`                               |
+
+Files:
+
+- `config.toml` — Configuration
+- `preferences.toml` — Preferences
+
+Writes are atomic (temp file + rename) for crash safety.
+
+## Platform Limitations
+
+### Hotkey Capture (Interactive Config)
+
+| Platform      | Support                                      | Notes                                                                               |
+| ------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Windows       | ✅ Full                                      | Works in CMD, PowerShell, Windows Terminal                                          |
+| macOS         | ✅ Full                                      | Requires Accessibility permissions for global hotkey registration (not for capture) |
+| Linux X11     | ✅ Full                                      | Works in GNOME Terminal, Konsole, etc.                                              |
+| Linux Wayland | ⚠️ Capture works, global hotkeys unsupported | `pynput` cannot register global hotkeys on Wayland; use XWayland or X11 session     |
+| SSH/Remote    | ⚠️ Capture may not work                      | Requires proper TTY allocation (`ssh -t`)                                           |
+
+### Global Hotkey Registration (`otpilot hotkey`)
+
+| Platform      | Support                   | Notes                                                         |
+| ------------- | ------------------------- | ------------------------------------------------------------- |
+| Windows       | ✅ Full                   |                                                               |
+| macOS         | ⚠️ Requires Accessibility | Grant in System Settings → Privacy & Security → Accessibility |
+| Linux X11     | ✅ Full                   |                                                               |
+| Linux Wayland | ❌ Unsupported            | `pynput` limitation; no known workaround                      |
+| SSH/Remote    | ❌ Unsupported            | No display server access                                      |
+
+### Terminal Compatibility
+
+The interactive UI requires a terminal that supports:
+
+- ANSI escape sequences (colors, cursor movement)
+- Raw mode input (for key capture)
+- Minimum width: 60 columns
+
+Known compatible terminals: Windows Terminal, Terminal.app, iTerm2, GNOME Terminal, Konsole, Alacritty, Kitty, foot.
 
 ## Documentation Requirement
 

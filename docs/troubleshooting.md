@@ -43,3 +43,28 @@ On Linux desktop environments using Wayland, global hotkey capture via `pynput` 
 ## Documentation looks stale
 
 Open an issue or pull request. Public behavior changes are incomplete unless the relevant documentation is updated.
+
+## Running Diagnostics with `otpilot doctor`
+
+Use `otpilot doctor` to diagnose installation, configuration, and runtime issues. The command performs checks across multiple categories and reports a summary with `PASS`, `WARN`, `FAIL`, and `SKIP` statuses.
+
+### Common Diagnostic Scenarios
+
+- **No email account configured**: Run `otpilot login <email>` to store credentials and set the active account.
+- **Gmail credentials not stored**: The doctor will warn if credentials are missing. Run `otpilot login <email>` with a Gmail App Password.
+- **Keyring backend unavailable**: On Linux, ensure a Secret Service daemon (GNOME Keyring, KWallet, KeePassXC) is running and unlocked.
+- **Configuration file permissions too open**: The doctor will warn if the config file is group- or world-readable. Fix with `chmod 600 <config-path>`.
+- **macOS Accessibility permission not granted**: Grant Accessibility access to your terminal under `System Settings > Privacy & Security > Accessibility`.
+- **Linux Wayland session**: Global hotkeys require X11. Switch to an X11 session or use `otpilot fetch` / `otpilot watch`.
+- **Missing or broken dependencies**: Reinstall OTPilot with `pip install --force-reinstall otpilot`.
+
+### Offline Mode
+
+Use `otpilot doctor --offline` to skip the live Gmail IMAP connectivity check. This is useful when network access is restricted or when credentials are not yet configured.
+
+### Exit Codes
+
+- `0`: No critical failures (`FAIL` status).
+- `1`: One or more critical failures detected.
+
+The doctor never prints secrets (credentials, OTPs) in its output.

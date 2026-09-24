@@ -1,9 +1,11 @@
 """Application-layer ports implemented by infrastructure adapters."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import Protocol
 
 from otpilot.config.models import AppConfig
+from otpilot.domain.diagnostics import DiagnosticCheck
 from otpilot.domain.models import AccountId, OtpResult
 from otpilot.preferences.models import UserPreferences
 
@@ -27,12 +29,54 @@ class ConfigurationRepository(Protocol):
         """Persist non-secret application configuration."""
 
 
+class MutableConfigurationRepository(ConfigurationRepository, Protocol):
+    path: Path
+
+    def declared_mapping(self) -> Mapping[str, object]:
+        """Return the raw TOML mapping, or an empty mapping when the file is missing."""
+
+    def clear(self) -> None:
+        """Delete the configuration file without touching stored credentials."""
+
+
 class PreferencesRepository(Protocol):
     def load(self) -> UserPreferences:
         """Load user preferences."""
 
     def save(self, preferences: UserPreferences) -> None:
         """Persist user preferences."""
+
+
+class MutablePreferencesRepository(PreferencesRepository, Protocol):
+    path: Path
+
+    def declared_mapping(self) -> Mapping[str, object]:
+        """Return the raw preferences mapping, or an empty mapping when missing."""
+
+    def clear(self) -> None:
+        """Delete the preferences file without touching stored credentials."""
+
+
+class PlatformDiagnostics(Protocol):
+    """Read-only environment probes used by `otpilot doctor`."""
+
+    def environment_checks(self) -> list[DiagnosticCheck]:
+        """Python, OS, architecture, and package version checks."""
+
+    def configuration_support_checks(self, config_path: Path) -> list[DiagnosticCheck]:
+        """Config directory writability and file permission checks."""
+
+    def keyring_check(self) -> DiagnosticCheck:
+        """Credential backend availability without reading stored secrets."""
+
+    def clipboard_check(self) -> DiagnosticCheck:
+        """Clipboard backend availability without writing clipboard contents."""
+
+    def hotkey_check(self) -> DiagnosticCheck:
+        """Hotkey environment support without registering a listener."""
+
+    def dependency_checks(self) -> list[DiagnosticCheck]:
+        """Importability of required runtime dependencies."""
 
 
 class OtpCache(Protocol):
