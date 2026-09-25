@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "otpilot"
-version = "3.0.0"
+version = "3.0.1"
 description = "Privacy-focused CLI that retrieves email OTPs via IMAP and copies them to the clipboard."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -50,9 +50,9 @@ dev = [
 otpilot = "otpilot.cli.app:main"
 
 [project.urls]
-Repository = "https://github.com/otpilot/otpilot"
-Issues = "https://github.com/otpilot/otpilot/issues"
-Changelog = "https://github.com/otpilot/otpilot/blob/main/CHANGELOG.md"
+Repository = "https://github.com/CodeWithJenil/otpilot3.0"
+Issues = "https://github.com/CodeWithJenil/otpilot3.0/issues"
+Changelog = "https://github.com/CodeWithJenil/otpilot3.0/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/otpilot"]
