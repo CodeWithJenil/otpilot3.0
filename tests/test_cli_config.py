@@ -1,16 +1,34 @@
-"""Tests for the `otpilot config` CLI command (interactive)."""
+"""Tests for the `otpilot config` CLI command.
 
+Interactive editing requires a real TTY; under the CLI runner (no TTY) the
+command must fall back to non-interactive display.  Full interactive flows
+are covered in ``test_config_ui.py`` and ``test_config_pty.py``.
+"""
+
+import platformdirs
 from typer.testing import CliRunner
 
 from otpilot.cli.app import app
+from otpilot.infrastructure.config_storage.toml import TomlConfigurationRepository
+from otpilot.infrastructure.preferences.toml import TomlPreferencesRepository
+
+runner = CliRunner()
+
+
+def _isolate_config(monkeypatch, tmp_path) -> None:
+    """Point platformdirs at a temporary config home for this test.
+
+    ``platformdirs`` ignores ``XDG_CONFIG_HOME`` on macOS, so ``HOME`` is
+    overridden as well.
+    """
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
 
 
 def test_config_command_shows_effective_configuration(monkeypatch, tmp_path) -> None:
-    """Test that `otpilot config` displays the effective configuration in non-interactive mode."""
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    _isolate_config(monkeypatch, tmp_path)
 
-    # In test environment (no TTY), runs in non-interactive mode
-    result = CliRunner().invoke(app, ["config"])
+    result = runner.invoke(app, ["config"])
 
     assert result.exit_code == 0
     assert "OTPilot Settings" in result.stdout
@@ -19,108 +37,99 @@ def test_config_command_shows_effective_configuration(monkeypatch, tmp_path) -> 
     assert "Watch" in result.stdout
     assert "Hotkeys" in result.stdout
     assert "Preferences" in result.stdout
-    assert "non-interactive mode" in result.stdout
 
 
-def test_config_non_interactive_mode(monkeypatch, tmp_path) -> None:
-    """Test that config runs in non-interactive mode when no TTY."""
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+def test_config_non_interactive_flag(monkeypatch, tmp_path) -> None:
+    _isolate_config(monkeypatch, tmp_path)
 
-    result = CliRunner().invoke(app, ["config"])
+    result = runner.invoke(app, ["config", "--non-interactive"])
 
     assert result.exit_code == 0
     assert "non-interactive mode" in result.stdout
 
 
-def test_config_interactive_edit_hotkey(monkeypatch, tmp_path) -> None:
-    """Test editing hotkey through interactive menu (requires real TTY)."""
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-    pass
+def test_config_non_tty_falls_back_to_non_interactive(monkeypatch, tmp_path) -> None:
+    """Without a TTY the command must not attempt interactive editing."""
+    _isolate_config(monkeypatch, tmp_path)
+
+    # CliRunner stdin is not a TTY, so the fallback path runs.
+    result = runner.invoke(app, ["config"])
+
+    assert result.exit_code == 0
+    assert "non-interactive mode" in result.stdout
+    assert "Goodbye" not in result.stdout
 
 
-def test_config_interactive_edit_poll_interval(monkeypatch, tmp_path) -> None:
-    """Test editing poll_interval_seconds through interactive menu."""
-    pass
+def test_config_invalid_config_file_exits_cleanly(monkeypatch, tmp_path) -> None:
+    _isolate_config(monkeypatch, tmp_path)
+    config_path = TomlConfigurationRepository().path
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text("not [valid toml")
+
+    result = runner.invoke(app, ["config"])
+
+    assert result.exit_code == 1
+    assert "Error" in result.stdout
+    assert "Traceback" not in result.stdout
 
 
-def test_config_interactive_edit_provider_account(monkeypatch, tmp_path) -> None:
-    """Test editing provider.account through interactive menu."""
-    pass
+def test_config_invalid_preferences_file_exits_cleanly(monkeypatch, tmp_path) -> None:
+    _isolate_config(monkeypatch, tmp_path)
+    preferences_path = TomlPreferencesRepository().path
+    preferences_path.parent.mkdir(parents=True, exist_ok=True)
+    preferences_path.write_text("not [valid toml")
 
+    result = runner.invoke(app, ["config"])
 
-def test_config_interactive_invalid_poll_interval_rejected(monkeypatch, tmp_path) -> None:
-    """Test that invalid poll_interval_seconds is rejected in interactive mode."""
-    pass
-
-
-def test_config_interactive_invalid_hotkey_rejected(monkeypatch, tmp_path) -> None:
-    """Test that invalid hotkey is rejected in interactive mode."""
-    pass
-
-
-def test_config_interactive_invalid_theme_rejected(monkeypatch, tmp_path) -> None:
-    """Test that invalid theme is rejected in interactive mode."""
-    pass
-
-
-def test_config_interactive_invalid_boolean_rejected(monkeypatch, tmp_path) -> None:
-    """Test that invalid boolean is rejected in interactive mode."""
-    pass
-
-
-def test_config_interactive_unknown_provider_rejected(monkeypatch, tmp_path) -> None:
-    """Test that unknown provider is rejected in interactive mode."""
-    pass
-
-
-def test_config_interactive_keep_current_value(monkeypatch, tmp_path) -> None:
-    """Test that pressing Enter keeps current value."""
-    pass
-
-
-def test_config_interactive_reset(monkeypatch, tmp_path) -> None:
-    """Test reset through interactive menu."""
-    pass
-
-
-def test_config_interactive_reset_cancelled(monkeypatch, tmp_path) -> None:
-    """Test that reset can be cancelled."""
-    pass
-
-
-def test_config_interactive_show_path(monkeypatch, tmp_path) -> None:
-    """Test showing config path through interactive menu."""
-    pass
-
-
-def test_config_interactive_edit_preferences_theme(monkeypatch, tmp_path) -> None:
-    """Test editing preferences.theme through interactive menu."""
-    pass
-
-
-def test_config_interactive_edit_preferences_auto_paste(monkeypatch, tmp_path) -> None:
-    """Test editing preferences.auto_paste_enabled through interactive menu."""
-    pass
-
-
-def test_config_interactive_edit_preferences_notifications(monkeypatch, tmp_path) -> None:
-    """Test editing preferences.notifications_enabled through interactive menu."""
-    pass
+    assert result.exit_code == 1
+    assert "Error" in result.stdout
+    assert "Traceback" not in result.stdout
 
 
 def test_config_secret_values_are_redacted(monkeypatch, tmp_path) -> None:
-    """Test that secret configuration values are redacted in output."""
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    """Displaying configuration must not expose secret values."""
+    _isolate_config(monkeypatch, tmp_path)
 
-    result = CliRunner().invoke(app, ["config"])
+    result = runner.invoke(app, ["config"])
 
     assert result.exit_code == 0
+    assert "app_password" not in result.stdout
 
 
 def test_config_keyboard_interrupt(monkeypatch, tmp_path) -> None:
-    """Test that Ctrl+C exits cleanly."""
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    """Ctrl+C input must not crash the command."""
+    _isolate_config(monkeypatch, tmp_path)
 
-    result = CliRunner().invoke(app, ["config"], input="\x03")
+    result = runner.invoke(app, ["config"], input="\x03")
 
     assert result.exit_code == 0
+
+
+def test_config_displays_all_settable_keys(monkeypatch, tmp_path) -> None:
+    _isolate_config(monkeypatch, tmp_path)
+
+    result = runner.invoke(app, ["config"])
+
+    assert result.exit_code == 0
+    for label in (
+        "Provider ID",
+        "Account",
+        "Backend",
+        "Poll Interval",
+        "Hotkey",
+        "Theme",
+        "Notifications",
+        "Auto Paste",
+        "Reset to Defaults",
+        "Exit",
+    ):
+        assert label in result.stdout
+
+
+def test_platformdirs_respects_isolated_home(monkeypatch, tmp_path) -> None:
+    """Guard the isolation strategy used by these tests."""
+    _isolate_config(monkeypatch, tmp_path)
+
+    path = platformdirs.user_config_path("otpilot")
+
+    assert str(tmp_path) in str(path)

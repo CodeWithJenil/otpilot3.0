@@ -26,7 +26,7 @@ OTPilot supports cross-platform execution on:
 
 ## Current Status
 
-Version 3.0.0 is released on PyPI. It features credential-backed Gmail IMAP fetching, candidate-based OTP extraction, optional clipboard copying via `otpilot fetch --copy` (which copies the OTP to the clipboard without printing it to terminal output), synchronous polling watch mode, and cross-platform global hotkey support.
+Version 3.0.0 features credential-backed Gmail IMAP fetching, candidate-based OTP extraction, optional clipboard copying via `otpilot fetch --copy` (which copies the OTP to the clipboard without printing it to terminal output), synchronous polling watch mode, and cross-platform global hotkey support.
 
 ## CLI
 

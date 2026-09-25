@@ -57,37 +57,52 @@ Inspect or update non-secret configuration and user preferences.
 
 ### Interactive Mode (Default)
 
-When run in a real terminal (TTY), `otpilot config` launches an interactive
-keyboard-navigable TUI:
+When run in a real terminal (TTY), `otpilot config` launches a synchronous,
+keyboard-navigable settings editor:
 
-- **↑ / ↓** — Navigate between settings
-- **Enter** — Select and edit a setting
-- **Esc** — Cancel editing or return to menu
-- **q** or **Esc** (at top level) — Exit the configuration UI
-- **← / →** — Navigate in confirmation dialogs
+- **↑ / ↓** — Move the selection (section headers are skipped)
+- **Enter** — Select the highlighted item
+- **Esc** — Cancel editing, or exit the editor at top level
+- **q**, **Ctrl+C**, **Ctrl+D** — Exit the editor at top level
+- **← / →** — Navigate options in the reset confirmation dialog
 
 Settings are grouped into sections (Provider, Credential Backend, Watch,
-Hotkeys, Preferences). Each setting shows its current value.
+Hotkeys, Preferences). Each setting shows its current value, and the list
+ends with a **Reset to Defaults** action and an **Exit** action.
 
 #### Editing Different Setting Types
 
-- **Boolean settings** (e.g., `notifications_enabled`): Toggle via selection
-  dialog with `true`/`false` options.
-- **Enum settings** (e.g., `theme`, `provider_id`): Select from available
-  options using arrow keys.
-- **Text/Numeric settings** (e.g., `account`, `poll_interval_seconds`): Input
-  with current value shown; validation applied on confirm.
-- **Hotkey setting**: Press **Enter** on the hotkey row to open the capture
-  dialog. The prompt reads "Press the desired key combination..." — physically
-  press the keys you want (e.g., `Ctrl+Shift+O`). The detected combination is
-  displayed. Press **Enter** to confirm, **Esc** to cancel. The combination is
-  normalized consistently across platforms (e.g., `ctrl+shift+o`).
+- **Enum/Boolean settings** (e.g., `theme`, `provider_id`,
+  `notifications_enabled`): A selection dialog opens with the current value
+  preselected. Navigate with **↑/↓** and press **Enter** to confirm,
+  **Esc** to cancel.
+- **Text/Numeric settings** (e.g., `account`, `poll_interval_seconds`): The
+  current value is displayed above a fresh input line. Type the new value
+  and press **Enter** to confirm; invalid values show an inline error and
+  the input is cleared for another try. Pressing **Enter** on an empty input
+  confirms the empty value — numeric settings reject it, and
+  `provider.account` treats it as clearing the account.
+- **Hotkey setting**: Press **Enter** on the hotkey row to open a modal
+  capture prompt ("Press the desired key combination..."). Physically press
+  the keys you want (e.g., `Ctrl+Shift+O`). Press **Esc** to cancel; the
+  capture also ends on its own after 30 seconds. The captured combination is
+  normalized and validated against the configuration rules before being
+  saved (a single non-modifier key is rejected). On macOS, the process
+  hosting OTPilot must have **both** Accessibility **and** Input Monitoring
+  permissions; a clear, actionable error is shown when macOS blocks input
+  monitoring.
 
-#### Restore Defaults
+  > **macOS Setup:** Go to **System Settings → Privacy & Security → Accessibility**  
+  > and enable your terminal (Terminal.app, iTerm2, etc.). Then go to  
+  > **System Settings → Privacy & Security → Input Monitoring** and enable  
+  > your terminal. Restart your terminal after granting permissions.
 
-Navigate to the **Restore Defaults** action at the bottom and press **Enter**.
-A confirmation dialog appears — select **Yes** to reset all configuration and
-preferences to defaults (credentials are not removed).
+#### Reset to Defaults
+
+Navigate to the **Reset to Defaults** action near the bottom and press
+**Enter**. A confirmation dialog appears — select **Yes** to reset all
+configuration and preferences to defaults (stored credentials are not
+removed), **No** or **Esc** to cancel.
 
 ### Non-Interactive Mode
 
@@ -104,12 +119,8 @@ when stdin is not a TTY.
 
 ### Subcommands
 
-- `otpilot config` — Display the full effective configuration (configured values, defaults, and sources).
-- `otpilot config get` — Display the full effective configuration.
-- `otpilot config get <key>` — Display a specific setting with its value and source.
-- `otpilot config set <key> <value>` — Update a supported non-secret setting.
-- `otpilot config path` — Print the platform-specific configuration file path.
-- `otpilot config reset [--yes]` — Restore configuration and preferences to defaults. Credentials are not removed. Use `--yes` to skip confirmation.
+- `otpilot config` — Display the full effective configuration in an interactive editor (or read-only with `--non-interactive`).
+- `otpilot config --non-interactive` / `-n` — Display the full effective configuration without interactive editing.
 
 ### Supported Configuration Keys
 

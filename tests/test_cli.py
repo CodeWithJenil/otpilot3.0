@@ -18,7 +18,11 @@ def test_version_command() -> None:
     assert "3.0.0" in result.stdout
 
 
-def test_fetch_command_is_registered() -> None:
+def test_fetch_command_is_registered(monkeypatch, tmp_path) -> None:
+    # Isolate the config path (platformdirs ignores XDG_CONFIG_HOME on macOS).
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+
     result = CliRunner().invoke(app, ["fetch"])
     assert result.exit_code == 1
     assert "No email account is configured" in result.stderr

@@ -29,19 +29,28 @@ Current model:
 
 ## Interactive Configuration UI
 
-Run `otpilot config` in a terminal to launch an interactive keyboard-navigable
-interface:
+Run `otpilot config` in a terminal to launch a synchronous, keyboard-navigable
+editor:
 
-- **Navigation**: ↑/↓ to move between settings, Enter to edit, Esc to cancel,
-  q or Esc (at top level) to exit.
-- **Boolean/Enum settings**: Selection dialog with arrow keys.
-- **Text/Numeric settings**: Input field with current value prefilled.
-- **Hotkey capture**: Press Enter on the hotkey row, then physically press the
-  desired key combination. The detected combination is displayed and normalized.
-  Enter confirms, Esc cancels.
-- **Restore Defaults**: Navigate to the action at the bottom, confirm in dialog.
+- **Navigation**: ↑/↓ to move the selection (section headers are skipped),
+  Enter to select, Esc to cancel or exit at top level. `q`, `Ctrl+C`, and
+  `Ctrl+D` also exit at top level.
+- **Boolean/Enum settings**: Selection dialog with the current value
+  preselected; ↑/↓ to navigate, Enter to confirm, Esc to cancel.
+- **Text/Numeric settings**: Current value shown above a fresh input line;
+  invalid values show an inline error and clear the input for another try.
+- **Hotkey capture**: Press Enter on the hotkey row, then physically press
+  the desired key combination. Esc cancels, and the capture ends on its own
+  after 30 seconds. Captured combinations are validated before saving. On
+  macOS the hosting terminal must have Accessibility / Input Monitoring
+  permission; an actionable error is shown when macOS blocks input
+  monitoring.
+- **Reset to Defaults**: Navigate to the action near the bottom, confirm in
+  dialog. Stored credentials are not removed.
 
-Use `otpilot config --non-interactive` (or `-n`) for scriptable read-only output.
+Use `otpilot config --non-interactive` (or `-n`) for scriptable read-only
+output. The command also falls back to this mode automatically when stdin is
+not a TTY.
 
 ## Storage
 
@@ -71,10 +80,15 @@ Writes are atomic (temp file + rename) for crash safety.
 | Platform      | Support                                      | Notes                                                                               |
 | ------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Windows       | ✅ Full                                      | Works in CMD, PowerShell, Windows Terminal                                          |
-| macOS         | ✅ Full                                      | Requires Accessibility permissions for global hotkey registration (not for capture) |
+| macOS         | ✅ Full                                      | Requires Accessibility **and** Input Monitoring permissions for the terminal app   |
 | Linux X11     | ✅ Full                                      | Works in GNOME Terminal, Konsole, etc.                                              |
 | Linux Wayland | ⚠️ Capture works, global hotkeys unsupported | `pynput` cannot register global hotkeys on Wayland; use XWayland or X11 session     |
 | SSH/Remote    | ⚠️ Capture may not work                      | Requires proper TTY allocation (`ssh -t`)                                           |
+
+> **macOS Users:** To capture a hotkey in `otpilot config`, your terminal application (Terminal.app, iTerm2, etc.) must have **both** Accessibility **and** Input Monitoring permissions.  
+> Go to **System Settings → Privacy & Security → Accessibility** and enable your terminal.  
+> Then go to **System Settings → Privacy & Security → Input Monitoring** and enable your terminal.  
+> Restart your terminal after granting permissions.
 
 ### Global Hotkey Registration (`otpilot hotkey`)
 

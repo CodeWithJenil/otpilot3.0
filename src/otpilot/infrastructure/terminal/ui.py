@@ -5,12 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from otpilot.infrastructure.terminal.keyboard import Key
 from rich.align import Align
 from rich.console import Console, ConsoleRenderable
 from rich.panel import Panel
 from rich.style import Style
 from rich.text import Text
+
+from otpilot.infrastructure.terminal.keyboard import Key
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,12 +104,24 @@ class SettingsMenu:
         self.items.append(
             MenuItem(
                 key="__action__reset",
-                label="Restore Defaults",
-                description="Reset all settings to their default values",
+                label="Reset to Defaults",
+                description="Reset all settings and preferences to their default values",
                 current_value="",
                 item_type="action",
             )
         )
+        self.items.append(
+            MenuItem(
+                key="__action__exit",
+                label="Exit",
+                description="Leave the configuration editor without saving",
+                current_value="",
+                item_type="action",
+            )
+        )
+
+        # Start with the first selectable item rather than a section header.
+        self.selected_index = self._first_selectable_index()
 
     def _get_section(self, key: str) -> str:
         """Get the section name for a setting key."""
@@ -152,21 +165,28 @@ class SettingsMenu:
         }
         return descriptions.get(key, "")
 
+    def _first_selectable_index(self) -> int:
+        """Return the index of the first non-section item, or 0 when empty."""
+        for index, item in enumerate(self.items):
+            if item.item_type != "section":
+                return index
+        return 0
+
     def move_up(self) -> None:
-        """Move selection up."""
-        if self.selected_index > 0:
-            self.selected_index -= 1
-            # Skip section headers
-            while self.selected_index > 0 and self.items[self.selected_index].item_type == "section":
-                self.selected_index -= 1
+        """Move selection up, skipping section headers."""
+        target = self.selected_index - 1
+        while target >= 0 and self.items[target].item_type == "section":
+            target -= 1
+        if target >= 0:
+            self.selected_index = target
 
     def move_down(self) -> None:
-        """Move selection down."""
-        if self.selected_index < len(self.items) - 1:
-            self.selected_index += 1
-            # Skip section headers
-            while self.selected_index < len(self.items) - 1 and self.items[self.selected_index].item_type == "section":
-                self.selected_index += 1
+        """Move selection down, skipping section headers."""
+        target = self.selected_index + 1
+        while target < len(self.items) and self.items[target].item_type == "section":
+            target += 1
+        if target < len(self.items):
+            self.selected_index = target
 
     def get_selected(self) -> MenuItem | None:
         """Get the currently selected item."""
@@ -231,18 +251,21 @@ class InputDialog:
         self.console = console
         self.buffer = ""
         self.cursor_pos = 0
+        self.error: str | None = None
 
     def render(self, title: str, prompt: str, current_value: str = "") -> ConsoleRenderable:
         """Render the input dialog."""
         content = Text()
         content.append(f"{prompt}\n\n")
-        content.append(f"Current: {current_value or '(empty)'}\n\n", Style(color="dim"))
+        content.append(f"Current: {current_value or '(empty)'}\n\n", Style(color="grey50"))
         content.append("> ", Style(bold=True, color="green"))
         content.append(self.buffer[:self.cursor_pos], Style(color="white"))
-        text_style = Style(bgcolor="grey20", color="white")
+        text_style = Style(bgcolor="grey19", color="white")
         content.append("▌", text_style)
         content.append(self.buffer[self.cursor_pos:], Style(color="white"))
         content.append("\n\n")
+        if self.error:
+            content.append(f"Error: {self.error}\n\n", Style(color="red"))
         content.append("Enter to confirm • Esc to cancel", Style(dim=True))
 
         return Panel(content, title=title, border_style="blue", padding=(1, 2))
@@ -279,12 +302,14 @@ class SelectionDialog:
     def __init__(self, console: Console) -> None:
         self.console = console
         self.selected_index = 0
+        self.options: list[tuple[str, str]] = []
+        self.error: str | None = None
 
     def render(self, title: str, prompt: str, options: list[tuple[str, str]], current_value: str) -> ConsoleRenderable:
         """Render the selection dialog."""
         content = Text()
         content.append(f"{prompt}\n\n")
-        content.append(f"Current: {current_value}\n\n", Style(color="dim"))
+        content.append(f"Current: {current_value}\n\n", Style(dim=True))
 
         for i, (value, label) in enumerate(options):
             is_selected = i == self.selected_index
@@ -299,6 +324,8 @@ class SelectionDialog:
             content.append("\n")
 
         content.append("\n")
+        if self.error:
+            content.append(f"Error: {self.error}\n\n", Style(color="red"))
         content.append("↑/↓ to navigate • Enter to select • Esc to cancel", Style(dim=True))
 
         return Panel(content, title=title, border_style="blue", padding=(1, 2))
@@ -313,45 +340,23 @@ class SelectionDialog:
             if self.selected_index < len(self.options) - 1:
                 self.selected_index += 1
         elif key == Key.ENTER:
+            if not self.options:
+                return None
             return self.options[self.selected_index][0]
         elif key == Key.ESCAPE:
             return "CANCEL"
         return None
 
-    def set_options(self, options: list[tuple[str, str]]) -> None:
-        """Set the options for selection."""
+    def set_options(self, options: list[tuple[str, str]], current: str | None = None) -> None:
+        """Set the options for selection, preselecting ``current`` when present."""
         self.options = options
+        self.error = None
         self.selected_index = 0
-
-
-class HotkeyCaptureDialog:
-    """Dialog for capturing a hotkey combination."""
-
-    def __init__(self, console: Console) -> None:
-        self.console = console
-        self.captured_keys: list[str] = []
-        self.display_text = "Press the desired key combination..."
-
-    def render(self, title: str, current_hotkey: str) -> ConsoleRenderable:
-        """Render the hotkey capture dialog."""
-        content = Text()
-        content.append(f"Current hotkey: {current_hotkey}\n\n", Style(color="dim"))
-        content.append(f"{self.display_text}\n\n", Style(bold=True))
-        if self.captured_keys:
-            content.append("Detected: ", Style(color="green"))
-            content.append(" + ".join(self.captured_keys), Style(bold=True, color="yellow"))
-        content.append("\n\n")
-        content.append("Press keys to capture • Enter to confirm • Esc to cancel", Style(dim=True))
-
-        return Panel(content, title=title, border_style="blue", padding=(1, 2))
-
-    def update_captured(self, keys: list[str]) -> None:
-        """Update the captured keys display."""
-        self.captured_keys = keys
-        if keys:
-            self.display_text = f"Detected: {' + '.join(keys)}"
-        else:
-            self.display_text = "Press the desired key combination..."
+        if current is not None:
+            for index, (value, _) in enumerate(options):
+                if value == current:
+                    self.selected_index = index
+                    break
 
 
 class ConfirmDialog:
@@ -386,5 +391,5 @@ class ConfirmDialog:
         elif key == Key.ENTER:
             return self.selected == 0
         elif key == Key.ESCAPE:
-            return False
+            return None
         return None
