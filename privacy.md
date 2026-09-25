@@ -25,9 +25,8 @@ OTPilot may process:
 
 ## Data Storage
 
-Non-secret configuration and preferences are stored locally. Credentials are stored only in the operating system credential vault.
+Non-secret configuration and preferences are stored locally. Credentials are stored only in the operating system credential vault (macOS Keychain, Windows Credential Manager, Linux Secret Service via `keyring`).
 
 ## Future Changes
 
 Any change that sends data outside the local machine requires updates to `README.md`, `architecture.md`, `security.md`, `privacy.md`, and `CHANGELOG.md`.
-

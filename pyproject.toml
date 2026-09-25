@@ -4,39 +4,43 @@ build-backend = "hatchling.build"
 
 [project]
 name = "otpilot"
-version = "0.1.0"
-description = "Local-first CLI for extracting one-time passwords from email accounts."
+version = "3.0.0"
+description = "Privacy-focused CLI that retrieves email OTPs via IMAP and copies them to the clipboard."
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "OTPilot contributors" }]
-keywords = ["otp", "imap", "gmail", "cli", "privacy"]
+keywords = ["otp", "imap", "gmail", "cli", "privacy", "clipboard", "two-factor"]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 4 - Beta",
   "Environment :: Console",
   "Intended Audience :: End Users/Desktop",
   "License :: OSI Approved :: MIT License",
   "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Communications :: Email",
   "Topic :: Security",
+  "Typing :: Typed",
 ]
 dependencies = [
   "imapclient>=3.0,<4.0",
-  "keyring>=25.0,<26.0",
+  "keyring>=25.0,<27.0",
   "platformdirs>=4.2,<5.0",
   "pydantic>=2.8,<3.0",
-  "pydantic-settings>=2.3,<3.0",
+  "pynput>=1.7,<2.0",
   "pyperclip>=1.9,<2.0",
-  "pynput>=1.7,<2.0; sys_platform == 'win32'",
-  "pywin32>=306; sys_platform == 'win32'",
-  "rich>=13.7,<14.0",
+  "rich>=13.7,<16.0",
   "tomli-w>=1.0,<2.0",
   "typer>=0.12,<1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
+  "build>=1.0",
   "mypy>=1.10,<2.0",
   "pytest>=8.2,<9.0",
   "ruff>=0.5,<1.0",
@@ -45,8 +49,23 @@ dev = [
 [project.scripts]
 otpilot = "otpilot.cli.app:main"
 
+[project.urls]
+Repository = "https://github.com/otpilot/otpilot"
+Issues = "https://github.com/otpilot/otpilot/issues"
+Changelog = "https://github.com/otpilot/otpilot/blob/main/CHANGELOG.md"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/otpilot"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/otpilot/",
+  "tests/",
+  "pyproject.toml",
+  "README.md",
+  "LICENSE",
+  "CHANGELOG.md",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

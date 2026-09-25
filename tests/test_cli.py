@@ -15,10 +15,14 @@ candidate = OtpCandidate(
 def test_version_command() -> None:
     result = CliRunner().invoke(app, ["version"])
     assert result.exit_code == 0
-    assert "0.1.0" in result.stdout
+    assert "3.0.0" in result.stdout
 
 
-def test_fetch_command_is_registered() -> None:
+def test_fetch_command_is_registered(monkeypatch, tmp_path) -> None:
+    # Isolate the config path (platformdirs ignores XDG_CONFIG_HOME on macOS).
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+
     result = CliRunner().invoke(app, ["fetch"])
     assert result.exit_code == 1
     assert "No email account is configured" in result.stderr
@@ -46,7 +50,7 @@ def test_fetch_command_confirms_copy(monkeypatch) -> None:
     result = CliRunner().invoke(app, ["fetch", "--copy"])
 
     assert result.exit_code == 0
-    assert result.stdout.splitlines() == ["OTP: 482913", "Copied to clipboard."]
+    assert result.stdout.strip() == "OTP copied to clipboard."
 
 
 def test_watch_command_invokes_watch_service(monkeypatch) -> None:

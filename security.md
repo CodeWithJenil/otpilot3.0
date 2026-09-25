@@ -11,15 +11,12 @@ For Gmail, users provide:
 
 ## Credential Storage
 
-Passwords must be stored in the operating system credential vault.
+Passwords must be stored in the operating system credential vault via `keyring`.
 
-V1 target:
-
-- Windows Credential Manager
-
-Future targets:
+Supported targets:
 
 - macOS Keychain
+- Windows Credential Manager
 - Linux Secret Service
 
 Passwords must never be stored in:
@@ -42,4 +39,3 @@ The only product network access planned for v1 is user-configured IMAP over SSL.
 ## Reporting Vulnerabilities
 
 Until a formal security policy is added, report vulnerabilities through the project issue tracker without including real credentials, OTPs, email content, or private account details.
-

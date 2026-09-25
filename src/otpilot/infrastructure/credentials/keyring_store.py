@@ -1,4 +1,9 @@
-"""Windows Credential Manager adapter backed by the platform keyring."""
+"""Cross-platform credential store backed by the system keyring.
+
+Uses the ``keyring`` library which delegates to the operating system
+credential vault: Windows Credential Manager, macOS Keychain, or
+Linux Secret Service (via D-Bus / libsecret).
+"""
 
 import json
 
@@ -8,7 +13,7 @@ from otpilot.domain.errors import CredentialError
 from otpilot.domain.models import AccountId
 
 
-class WindowsCredentialManagerStore:
+class KeyringCredentialStore:
     service_name = "OTPilot"
 
     def _target(self, account_id: AccountId) -> str:

@@ -3,21 +3,21 @@
 ## Requirements
 
 - Python 3.12 or newer.
-- Windows for the first production credential backend.
+- Supported Operating System: Windows, macOS, or Linux X11 (*Wayland is unsupported*).
 - A Gmail account with IMAP enabled and a Google App Password for the first provider target.
+
+## Runtime Installation
+
+Install OTPilot from PyPI:
+
+```bash
+pip install otpilot
+```
 
 ## Development Installation
 
 ```bash
 python -m pip install -e ".[dev]"
-```
-
-## Runtime Installation
-
-OTPilot is not published to PyPI in this scaffold phase. When packaged, the runtime install command will be:
-
-```bash
-python -m pip install otpilot
 ```
 
 ## Verify Installation
@@ -27,5 +27,4 @@ otpilot version
 otpilot doctor
 ```
 
-In this scaffold phase, `doctor` reports that diagnostics are not implemented yet.
-
+*Note:* `otpilot doctor` is currently a scaffolded command that reports diagnostic status.

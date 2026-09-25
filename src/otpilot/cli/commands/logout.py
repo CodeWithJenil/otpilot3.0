@@ -1,7 +1,7 @@
 import typer
 
 from otpilot.application.services import LogoutService
-from otpilot.infrastructure.credentials.windows import WindowsCredentialManagerStore
+from otpilot.infrastructure.credentials.keyring_store import KeyringCredentialStore
 
 
 def command(
@@ -11,5 +11,5 @@ def command(
     ),
 ) -> None:
     """Remove stored credentials for an email account."""
-    LogoutService(WindowsCredentialManagerStore()).logout(account)
+    LogoutService(KeyringCredentialStore()).logout(account)
     typer.echo(f"Credentials removed for {account}.")
