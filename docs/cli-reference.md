@@ -184,6 +184,71 @@ Inspect local configuration, provider availability, credential backend support, 
 
 Print the installed package version.
 
+## `otpilot telemetry`
+
+Manage anonymous usage telemetry.
+
+### Subcommands
+
+- `otpilot telemetry status` — Show whether telemetry is enabled and display the installation ID (if enabled).
+- `otpilot telemetry enable` — Enable telemetry. Generates a random installation ID if none exists. Displays exactly what data will be collected.
+- `otpilot telemetry disable` — Disable telemetry. Stops future transmission. Preserves the installation ID locally.
+
+### Telemetry Principles
+
+- **Opt-in only**: Telemetry is disabled by default. You must explicitly run `otpilot telemetry enable`.
+- **Anonymous**: A cryptographically random UUID is generated locally. It is not derived from hardware, hostname, username, or identity.
+- **Minimal payload**: Only operational metadata is sent (installation ID, event name, version, Python version, OS, architecture, timestamp, optional command name from allowlist).
+- **No sensitive data**: Never collects emails, OTPs, credentials, clipboard contents, file paths, usernames, IP addresses, exact location, hostnames, or command arguments.
+- **Asynchronous & non-blocking**: Telemetry is dispatched in a background thread. It never adds latency to your command.
+- **Failure-tolerant**: Network failures, timeouts, or server errors are silently ignored. A telemetry failure never causes an OTPilot command to fail.
+- **Easy to disable**: `otpilot telemetry disable` stops transmission immediately.
+
+### What IS Collected (if enabled)
+
+| Field | Example |
+|-------|---------|
+| `installation_id` | `a1b2c3d4-e5f6-7890-abcd-ef1234567890` |
+| `event` | `app_started`, `command_executed` |
+| `version` | `3.0.1` |
+| `python_version` | `3.12` |
+| `os` | `macos`, `linux`, `windows` |
+| `architecture` | `x86_64`, `arm64` |
+| `timestamp` | `2026-09-27T10:15:00Z` |
+| `command` (optional) | `fetch`, `watch`, `hotkey` |
+
+### What is NOT Collected
+
+- Email addresses, email contents, OTP codes
+- Credentials, passwords, access tokens
+- Clipboard contents, file paths, usernames
+- IP addresses (beyond inherent HTTP metadata), exact location, hostnames
+- Command arguments or any sensitive data
+
+### End-of-Command Suggestion
+
+When telemetry is disabled, a brief suggestion appears at the **end** of normal human-readable command output:
+
+```text
+Telemetry is currently disabled.
+Enable anonymous telemetry to help improve OTPilot:
+  otpilot telemetry enable
+```
+
+This suggestion:
+- Appears **after** the command's normal output
+- Does not interfere with command results or machine-readable output (e.g., JSON)
+- Does not appear for `telemetry` subcommands themselves
+- Is concise and non-intrusive
+
+### Installation ID Lifecycle
+
+- Generated only when telemetry is first enabled.
+- Stored in local preferences (not config, not keyring).
+- Persists across OTPilot runs.
+- Preserved when telemetry is disabled; reused if re-enabled later.
+- Not derived from MAC address, hostname, username, email, or hardware identifiers.
+
 ## Documentation Requirement
 
 Any command addition or behavior change must update this file, `README.md`, `docs/troubleshooting.md`, and `CHANGELOG.md`.

@@ -15,7 +15,7 @@ candidate = OtpCandidate(
 def test_version_command() -> None:
     result = CliRunner().invoke(app, ["version"])
     assert result.exit_code == 0
-    assert "3.0.0" in result.stdout
+    assert "3.1.0" in result.stdout
 
 
 def test_fetch_command_is_registered(monkeypatch, tmp_path) -> None:

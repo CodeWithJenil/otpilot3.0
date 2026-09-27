@@ -11,11 +11,11 @@ from collections import deque
 import pytest
 from rich.console import Console
 
-from otpilot.application.settings import SettingsService, SETTABLE_KEYS
+from otpilot.application.settings import SETTABLE_KEYS, SettingsService
 from otpilot.infrastructure.config_storage.toml import TomlConfigurationRepository
 from otpilot.infrastructure.preferences.toml import TomlPreferencesRepository
-from otpilot.infrastructure.terminal.keyboard import Key, KeyEvent, parse_key
 from otpilot.infrastructure.terminal.hotkey_capture import HotkeyCapture
+from otpilot.infrastructure.terminal.keyboard import Key, KeyEvent, parse_key
 from otpilot.infrastructure.terminal.ui import (
     ConfirmDialog,
     InputDialog,
@@ -116,6 +116,8 @@ class TestSettingsMenu:
             "preferences.theme",
             "preferences.notifications_enabled",
             "preferences.auto_paste_enabled",
+            "preferences.telemetry_enabled",
+            "preferences.telemetry_installation_id",
             "__action__reset",
             "__action__exit",
         ]
@@ -165,6 +167,8 @@ class TestSettingsMenu:
             "preferences.theme",
             "preferences.notifications_enabled",
             "preferences.auto_paste_enabled",
+            "preferences.telemetry_enabled",
+            "preferences.telemetry_installation_id",
             "__action__reset",
             "__action__exit",
         ]

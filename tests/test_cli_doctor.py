@@ -63,7 +63,7 @@ def test_doctor_command_reports_otpilot_version(monkeypatch, tmp_path) -> None:
     result = CliRunner().invoke(app, ["doctor", "--offline"])
 
     assert result.exit_code == 0
-    assert "OTPilot version: 3.0.0" in result.stdout
+    assert "OTPilot version: 3.1.0" in result.stdout
 
 
 def test_doctor_command_checks_config_directory(monkeypatch, tmp_path) -> None:

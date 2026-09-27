@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import AboutDeveloper from "@/components/AboutDeveloper";
 import CustomCursor from "@/components/CustomCursor";
 import GrainOverlay from "@/components/GrainOverlay";
+import TelemetryPrivacy from "@/components/TelemetryPrivacy";
 
 const Index = () => {
   return (
@@ -17,6 +18,7 @@ const Index = () => {
       <FeaturesGrid />
       <InstallStrip />
       <AboutDeveloper />
+      <TelemetryPrivacy />
       <Footer />
     </main>
   );

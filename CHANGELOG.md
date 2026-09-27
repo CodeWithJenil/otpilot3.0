@@ -1,5 +1,40 @@
 # Changelog
 
+## 3.1.0 - 2026-09-27
+
+### Added
+- **Optional opt-in telemetry system** with privacy-first design:
+  - New CLI commands: `otpilot telemetry enable`, `otpilot telemetry disable`, `otpilot telemetry status`
+  - Anonymous installation ID (UUID v4) generated locally on first enable, persisted in preferences
+  - Asynchronous, non-blocking HTTP transmission via background thread (2s connect / 5s total timeout)
+  - Failure-tolerant: network errors never cause OTPilot commands to fail
+  - Strict allowlist for events (`app_started`, `command_executed`, `telemetry_enabled`, `telemetry_disabled`) and commands (`fetch`, `watch`, `hotkey`, `login`, `logout`, `config`, `doctor`, `version`, `telemetry`)
+  - Payload includes only: OTPilot version, Python version, OS, CPU architecture, installation ID, event type, timestamp, optional command name
+  - Explicitly excludes: emails, OTPs, credentials, clipboard contents, file paths, usernames, hostnames, exact location, command arguments
+  - End-of-command suggestion when telemetry is disabled (TTY only, not for telemetry commands)
+- **Telemetry backend** on Vercel with Neon PostgreSQL storage:
+  - POST `/api/telemetry` endpoint with strict schema validation
+  - GET `/api/telemetry-query` endpoint for querying stored events
+  - Single `telemetry_events` table with indexes on installation_id, event, received_at, command
+- **Website Telemetry & Privacy section** integrated into home page:
+  - Terminal-style panel matching OTPilot visual identity
+  - Status display, collected/never-collected breakdown, CLI commands, expandable payload example
+  - Responsive design with scroll animations and reduced-motion support
+
+### Changed
+- Updated `UserPreferences` model with `telemetry_enabled` (default: false) and `telemetry_installation_id` fields
+- Extended `SettingsService` with telemetry preference keys and parsing logic
+- Enhanced CLI entrypoint (`TelemetryTyper`) with async telemetry dispatch and end-of-command suggestion
+- Updated website to v3.1 with Telemetry & Privacy section
+- Updated privacy documentation across README, privacy.md, docs/cli-reference.md, docs/configuration.md, and website
+
+### Privacy
+- Telemetry is opt-in only (disabled by default)
+- No sensitive data collected (emails, OTPs, credentials, clipboard, paths, hostnames, IPs, command arguments)
+- Installation ID randomly generated (UUID v4), not derived from hardware/identity
+- Easy to disable: `otpilot telemetry disable` preserves installation ID locally
+- Transparent: `otpilot telemetry enable` shows exactly what data is collected
+
 ## 3.0.0 - 2026-09-25
 
 ### Added

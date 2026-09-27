@@ -28,7 +28,7 @@ const Footer = () => (
           PyPI
         </a>
         <a
-          href="https://github.com/codewithjenil/otpilot"
+          href="https://github.com/codewithjenil/otpilot3.0"
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-muted-foreground hover:text-primary font-mono transition-colors duration-200"

@@ -7,7 +7,7 @@ from otpilot.cli.app import app
 
 
 def test_package_version_is_set() -> None:
-    assert __version__ == "3.0.0"
+    assert __version__ == "3.1.0"
 
 
 def test_package_imports_cleanly() -> None:
@@ -44,7 +44,7 @@ def test_cli_entry_point_help() -> None:
 def test_cli_version_reports_current() -> None:
     result = CliRunner().invoke(app, ["version"])
     assert result.exit_code == 0
-    assert "3.0.0" in result.stdout
+    assert "3.1.0" in result.stdout
 
 
 def test_all_commands_registered() -> None:

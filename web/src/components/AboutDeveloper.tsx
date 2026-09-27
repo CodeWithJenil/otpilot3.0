@@ -18,7 +18,7 @@ const AboutDeveloper = () => {
               Visit Portfolio
             </a>
             <a
-              href="https://github.com/codewithjenil/otpilot"
+              href="https://github.com/codewithjenil/otpilot3.0"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border text-foreground font-mono text-sm hover:bg-card transition-colors"

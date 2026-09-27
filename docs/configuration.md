@@ -26,6 +26,8 @@ Current model:
 - `theme`: `system` by default. Options: `system`, `light`, `dark`.
 - `notifications_enabled`: `true` by default. Boolean.
 - `auto_paste_enabled`: `false` by default. Boolean.
+- `telemetry_enabled`: `false` by default. Boolean. When `true`, enables anonymous usage telemetry.
+- `telemetry_installation_id`: Random UUID generated locally when telemetry is first enabled. Persists across runs. Not derived from hardware or identity.
 
 ## Interactive Configuration UI
 

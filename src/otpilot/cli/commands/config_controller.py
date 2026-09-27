@@ -516,9 +516,7 @@ class ConfigController:
                 self._confirm_dialog = ConfirmDialog(self.renderer.console if hasattr(self.renderer, "console") else Console())
                 return Transition(State.CONFIRM_RESET)
             return self._enter_edit_state(item)
-        elif event.key in (Key.ESCAPE, Key.CTRL_C, Key.CTRL_D):
-            return Transition(State.EXIT, action="exit_editor")
-        elif event.key == Key.CHAR and event.char and event.char.lower() == "q":
+        elif event.key in (Key.ESCAPE, Key.CTRL_C, Key.CTRL_D) or (event.key == Key.CHAR and event.char and event.char.lower() == "q"):
             return Transition(State.EXIT, action="exit_editor")
         return Transition(State.MENU)
 

@@ -19,7 +19,7 @@ OTPilot supports cross-platform execution on:
 ## Product Principles
 
 - Local only: no server, hosted API, relay, sync service, or cloud dependency.
-- No telemetry: OTPilot does not collect usage, diagnostics, crash reports, or analytics.
+- **Telemetry is optional and opt-in**: OTPilot does not collect usage, diagnostics, crash reports, or analytics unless you explicitly enable it with `otpilot telemetry enable`. Telemetry is disabled by default.
 - No OAuth: email access uses IMAP over SSL and provider-specific app passwords.
 - Secure credentials: passwords are stored in the operating system credential vault via `keyring` (macOS Keychain, Windows Credential Manager, Linux Secret Service), never in config files.
 - Documentation first: public behavior is incomplete unless docs are updated with code.
@@ -40,6 +40,9 @@ otpilot logout user@gmail.com
 otpilot config
 otpilot doctor
 otpilot version
+otpilot telemetry status
+otpilot telemetry enable
+otpilot telemetry disable
 ```
 
 See [docs/cli-reference.md](docs/cli-reference.md) for command behavior and documentation details.

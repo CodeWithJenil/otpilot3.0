@@ -7,21 +7,18 @@ the new ConfigController with its explicit state machine.
 import io
 from collections import deque
 
-import pytest
 from rich.console import Console
 
-from otpilot.application.settings import SettingsService, SETTABLE_KEYS
+from otpilot.application.settings import SETTABLE_KEYS, SettingsService
 from otpilot.cli.commands.config_controller import (
     RESET_ACTION_KEY,
     ConfigController,
-    RichRenderer,
     create_controller,
 )
 from otpilot.infrastructure.config_storage.toml import TomlConfigurationRepository
 from otpilot.infrastructure.preferences.toml import TomlPreferencesRepository
 from otpilot.infrastructure.terminal.keyboard import Key, KeyEvent, parse_key
 from otpilot.infrastructure.terminal.ui import SettingsMenu
-
 
 # ----------------------------------------------------------------------
 # Helpers
@@ -126,6 +123,8 @@ class TestSettingsMenu:
             "preferences.theme",
             "preferences.notifications_enabled",
             "preferences.auto_paste_enabled",
+            "preferences.telemetry_enabled",
+            "preferences.telemetry_installation_id",
             RESET_ACTION_KEY,
             "__action__exit",
         ]
@@ -175,6 +174,8 @@ class TestSettingsMenu:
             "preferences.theme",
             "preferences.notifications_enabled",
             "preferences.auto_paste_enabled",
+            "preferences.telemetry_enabled",
+            "preferences.telemetry_installation_id",
             RESET_ACTION_KEY,
             "__action__exit",
         ]
@@ -579,7 +580,7 @@ class TestControllerReset:
     def test_reset_confirmed(self, tmp_path) -> None:
         service = make_service(tmp_path)
         service.set("poll_interval_seconds", "10")
-        controller = make_controller(service, down(8), "\r", "\r", "\x1b")
+        controller = make_controller(service, down(10), "\r", "\r", "\x1b")
         controller.hotkey_capturer = MockHotkeyCapturer()
 
         controller.run()
@@ -591,7 +592,7 @@ class TestControllerReset:
     def test_reset_cancelled_with_escape(self, tmp_path) -> None:
         service = make_service(tmp_path)
         service.set("poll_interval_seconds", "10")
-        controller = make_controller(service, down(8), "\r", "\x1b", "\x1b")
+        controller = make_controller(service, down(10), "\r", "\x1b", "\x1b")
         controller.hotkey_capturer = MockHotkeyCapturer()
 
         controller.run()
@@ -602,7 +603,7 @@ class TestControllerReset:
     def test_reset_cancelled_with_no(self, tmp_path) -> None:
         service = make_service(tmp_path)
         service.set("poll_interval_seconds", "10")
-        controller = make_controller(service, down(8), "\r", right(), "\r", "\x1b")
+        controller = make_controller(service, down(10), "\r", right(), "\r", "\x1b")
         controller.hotkey_capturer = MockHotkeyCapturer()
 
         controller.run()

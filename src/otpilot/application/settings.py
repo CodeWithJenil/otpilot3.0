@@ -27,9 +27,11 @@ PREFERENCE_KEYS = (
     "preferences.theme",
     "preferences.notifications_enabled",
     "preferences.auto_paste_enabled",
+    "preferences.telemetry_enabled",
+    "preferences.telemetry_installation_id",
 )
-SUPPORTED_KEYS = CONFIG_KEYS + PREFERENCE_KEYS
-SETTABLE_KEYS = tuple(key for key in SUPPORTED_KEYS if key != "config_dir")
+SUPPORTED_KEYS = CONFIG_KEYS + PREFERENCE_KEYS + ("preferences",)
+SETTABLE_KEYS = tuple(key for key in SUPPORTED_KEYS if key not in ("config_dir", "preferences"))
 _SECRET_TOKENS = {"password", "app_password", "token", "secret", "otp", "credentials"}
 _KNOWN_PROVIDERS = {"gmail"}
 _KNOWN_CREDENTIAL_BACKENDS = {"keyring"}
@@ -129,11 +131,15 @@ def _parse_value(key: str, value: str) -> object:
         return backend
     if key in {"preferences.notifications_enabled", "preferences.auto_paste_enabled"}:
         return _parse_bool(value)
+    if key in {"preferences.telemetry_enabled"}:
+        return _parse_bool(value)
     if key == "preferences.theme":
         theme = value.strip().lower()
         if theme not in {"system", "light", "dark"}:
             raise ConfigurationError("theme must be one of: system, light, dark.")
         return theme
+    if key == "preferences.telemetry_installation_id":
+        return value.strip() or None
     if key == "hotkey":
         return value
     raise ConfigurationError(f"Unknown configuration key '{key}'.")
@@ -174,12 +180,17 @@ class SettingsService:
             "preferences.theme": preferences.theme,
             "preferences.notifications_enabled": preferences.notifications_enabled,
             "preferences.auto_paste_enabled": preferences.auto_paste_enabled,
+            "preferences.telemetry_enabled": preferences.telemetry_enabled,
+            "preferences.telemetry_installation_id": preferences.telemetry_installation_id,
+            "preferences": preferences,
         }
         entries: list[SettingEntry] = []
         for key in SUPPORTED_KEYS:
             source: SettingSource
             if key == "config_dir" and "config_dir" not in declared_config:
                 source = "derived"
+            elif key == "preferences":
+                source = "configured" if declared_preferences else "default"
             elif key.startswith("preferences."):
                 source = "configured" if key in declared_preferences else "default"
             elif key in declared_config:
