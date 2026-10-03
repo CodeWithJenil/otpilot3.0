@@ -1,5 +1,7 @@
 # OTPilot
 
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/otpilot?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREEN&right_color=BLACK&left_text=downloads)](https://pepy.tech/projects/otpilot)
+
 OTPilot is a local-first CLI application for fetching one-time passwords from email accounts.
 
 The first supported provider target is Gmail via IMAP over SSL with Google App Passwords. The architecture is intentionally not Gmail-specific: Gmail is a provider configuration layered on a generic IMAP transport so Outlook, Yahoo, Proton Bridge, and custom IMAP servers can be added without changing the CLI or application services.
