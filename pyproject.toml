@@ -9,7 +9,7 @@ description = "Privacy-focused CLI that retrieves email OTPs via IMAP and copies
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
-authors = [{ name = "OTPilot contributors" }]
+authors = [{ name = "Jenil and OTPilot contributors" }]
 keywords = ["otp", "imap", "gmail", "cli", "privacy", "clipboard", "two-factor"]
 classifiers = [
   "Development Status :: 4 - Beta",
