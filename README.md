@@ -1,121 +1,103 @@
 # OTPilot
 
-[![PyPI Downloads](https://static.pepy.tech/personalized-badge/otpilot?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREEN&right_color=BLACK&left_text=downloads)](https://pepy.tech/projects/otpilot)
+[![PyPI version](https://img.shields.io/pypi/v/otpilot)](https://pypi.org/project/otpilot/)
+[![Python versions](https://img.shields.io/pypi/pyversions/otpilot)](https://pypi.org/project/otpilot/)
+[![Downloads](https://static.pepy.tech/personalized-badge/otpilot?period=month&units=INTERNATIONAL_SYSTEM&left_color=GREEN&right_color=BLACK&left_text=downloads%20this%20month)](https://pepy.tech/projects/otpilot)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-OTPilot is a local-first CLI application for fetching one-time passwords from email accounts.
+**Retrieve email OTPs from your terminal and copy them to your clipboard—without manually searching your inbox.**
 
-The first supported provider target is Gmail via IMAP over SSL with Google App Passwords. The architecture is intentionally not Gmail-specific: Gmail is a provider configuration layered on a generic IMAP transport so Outlook, Yahoo, Proton Bridge, and custom IMAP servers can be added without changing the CLI or application services.
+OTPilot is a local-first command-line tool for retrieving one-time passwords from Gmail over IMAP. Use it when you want a simpler workflow for email-based verification codes.
 
-OTPilot is available on PyPI:
+- **Clipboard support:** use `otpilot fetch --copy` to copy the detected OTP without printing its value to terminal output.
+- **Local-first design:** email retrieval happens on your machine; OTPilot does not require a hosted relay or sync service.
+- **Opt-in telemetry:** usage telemetry is disabled by default and is sent only if you explicitly enable it.
+- **Credential storage:** credentials are stored through your operating system's credential vault rather than in the TOML configuration file.
+- **Cross-platform CLI:** Windows, macOS, and Linux with X11 are supported. Linux Wayland is not currently supported.
+
+## Get started
+
+### 1. Install
+
+Requires Python 3.12 or newer.
+
 ```bash
-pip install otpilot
+python -m pip install --upgrade otpilot
 ```
 
-## Platform Support
+### 2. Configure Gmail access
 
-OTPilot supports cross-platform execution on:
-- **Windows**
-- **macOS**
-- **Linux X11** (*Wayland is unsupported*)
+OTPilot currently supports Gmail through IMAP over SSL and a Google App Password. Enable IMAP for your Gmail account and create an App Password if your Google account is eligible. Never share your App Password or commit it to a repository.
 
-## Product Principles
-
-- Local only: no server, hosted API, relay, sync service, or cloud dependency.
-- **Telemetry is optional and opt-in**: OTPilot does not collect usage, diagnostics, crash reports, or analytics unless you explicitly enable it with `otpilot telemetry enable`. Telemetry is disabled by default.
-- No OAuth: email access uses IMAP over SSL and provider-specific app passwords.
-- Secure credentials: passwords are stored in the operating system credential vault via `keyring` (macOS Keychain, Windows Credential Manager, Linux Secret Service), never in config files.
-- Documentation first: public behavior is incomplete unless docs are updated with code.
-
-## Current Status
-
-Version 3.0.0 features credential-backed Gmail IMAP fetching, candidate-based OTP extraction, optional clipboard copying via `otpilot fetch --copy` (which copies the OTP to the clipboard without printing it to terminal output), synchronous polling watch mode, and cross-platform global hotkey support.
-
-## CLI
+### 3. Sign in and fetch
 
 ```bash
-otpilot fetch
+otpilot login you@gmail.com
 otpilot fetch --copy
-otpilot watch
-otpilot hotkey
-otpilot login user@gmail.com
-otpilot logout user@gmail.com
-otpilot config
-otpilot doctor
-otpilot version
-otpilot telemetry status
-otpilot telemetry enable
-otpilot telemetry disable
 ```
 
-See [docs/cli-reference.md](docs/cli-reference.md) for command behavior and documentation details.
+Follow the prompts shown by the CLI. The `fetch --copy` command copies the detected OTP to your clipboard when a suitable code is found.
 
-## Global Hotkey
+## Common commands
 
-`otpilot hotkey` registers a system-wide hotkey using a cross-platform `pynput` adapter so it works while another application has focus:
-- **Windows & Linux (X11)**: `Ctrl+Shift+O` by default.
-- **macOS**: `Cmd+Shift+O` or `Ctrl+Shift+O` by default.
+| Command | Purpose |
+| --- | --- |
+| `otpilot login you@gmail.com` | Configure an email account |
+| `otpilot fetch` | Fetch and identify OTP candidates |
+| `otpilot fetch --copy` | Copy the selected OTP to the clipboard |
+| `otpilot watch` | Poll for new OTP messages |
+| `otpilot hotkey` | Run the global-hotkey workflow |
+| `otpilot config` | View or edit preferences |
+| `otpilot doctor` | Diagnose common setup issues |
+| `otpilot telemetry status` | Check telemetry status |
+| `otpilot telemetry enable` | Explicitly enable optional telemetry |
+| `otpilot telemetry disable` | Disable telemetry |
+| `otpilot logout you@gmail.com` | Remove saved account credentials |
 
-Configure another supported combination in OTPilot's non-secret TOML configuration file, for example:
+Run `otpilot --help` or consult the [CLI reference](docs/cli-reference.md) for details.
 
-```toml
-hotkey = "cmd+shift+o"
-```
+## Platform notes
 
-*Note:* On macOS, Accessibility permissions are required for hotkey capturing. On Linux, only X11 display servers are supported (Wayland is unsupported).
+- **Windows:** supported.
+- **macOS:** supported; Accessibility permission may be required for global hotkey capture.
+- **Linux:** X11 is supported; Wayland is not currently supported.
 
-Press `Ctrl+C` to unregister the hotkey and exit. Each invocation copies the OTP to the clipboard; OTPilot never prints it in hotkey mode and does **not** paste it automatically.
+Hotkey combinations can be configured in OTPilot's non-secret TOML configuration file. See the [configuration guide](docs/configuration.md).
 
-## Privacy Guarantee (`fetch --copy`)
+## Privacy and security
 
-When using `otpilot fetch --copy` or running in hotkey mode, OTPilot copies the extracted OTP directly to your system clipboard without printing the value to terminal output.
+OTPilot is designed to keep email retrieval local and credentials out of plain-text configuration files.
 
-## Architecture
+- Credentials use the operating system credential vault through `keyring` (macOS Keychain, Windows Credential Manager, or a supported Linux Secret Service backend).
+- OTP values copied with `fetch --copy` are not printed to terminal output by that command.
+- Telemetry is **off by default**. You can inspect its status and enable or disable it with the commands above.
+- Review the [privacy policy](privacy.md) and [security guidance](security.md) before use.
 
-OTPilot is layered:
+As with any tool that accesses email, review the permissions you grant and protect your account credentials.
 
-```text
-CLI
-Application Services
-Domain
-Providers
-Infrastructure
-```
+## How it works
 
-The provider architecture is:
+OTPilot is organized into layers that separate the CLI, application services, domain logic, providers, and infrastructure. Its current email provider is Gmail over IMAP. Other IMAP providers are architectural possibilities, not currently advertised as supported providers.
 
-```text
-OTP Source
-  -> IMAP Provider
-      -> Gmail
-      -> Outlook
-      -> Yahoo
-      -> Custom IMAP
-```
-
-See [architecture.md](architecture.md) for the complete architecture, dependency graph, and design decisions.
+See [architecture.md](architecture.md) for the design and [developer-guide.md](developer-guide.md) for the development workflow.
 
 ## Documentation
 
-- [installation.md](installation.md): installation and development setup.
-- [architecture.md](architecture.md): boundaries, dependency graph, and decisions.
-- [developer-guide.md](developer-guide.md): engineering workflow and testing.
-- [contributing.md](contributing.md): contribution requirements.
-- [security.md](security.md): credential and logging rules.
-- [privacy.md](privacy.md): privacy guarantees.
-- [roadmap.md](roadmap.md): phased delivery plan.
-- [docs/configuration.md](docs/configuration.md): config and preferences reference.
-- [docs/troubleshooting.md](docs/troubleshooting.md): support guide.
-- [CHANGELOG.md](CHANGELOG.md): release history.
+- [Installation and development setup](installation.md)
+- [CLI reference](docs/cli-reference.md)
+- [Configuration](docs/configuration.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Architecture](architecture.md)
+- [Security](security.md)
+- [Privacy](privacy.md)
+- [Contributing](contributing.md)
+- [Roadmap](roadmap.md)
+- [Changelog](CHANGELOG.md)
 
-## Development
+## Contributing
 
-```bash
-python -m pip install -e ".[dev]"
-pytest
-ruff check .
-mypy src/otpilot
-```
+Issues, bug reports, and thoughtful contributions are welcome. Please read [contributing.md](contributing.md) before opening a pull request. When reporting an issue, include your OS, Python version, OTPilot version, and the command involved—never include OTPs, passwords, App Passwords, or private email content.
 
 ## License
 
-MIT.
+OTPilot is released under the [MIT License](LICENSE).
