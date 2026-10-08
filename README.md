@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/otpilot)](https://pypi.org/project/otpilot/)
 [![Python versions](https://img.shields.io/pypi/pyversions/otpilot)](https://pypi.org/project/otpilot/)
-[![Downloads](https://static.pepy.tech/personalized-badge/otpilot?period=month&units=INTERNATIONAL_SYSTEM&left_color=GREEN&right_color=BLACK&left_text=downloads%20this%20month)](https://pepy.tech/projects/otpilot)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/otpilot?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/otpilot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Retrieve email OTPs from your terminal and copy them to your clipboard—without manually searching your inbox.**
