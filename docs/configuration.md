@@ -28,6 +28,11 @@ Current model:
 - `auto_paste_enabled`: `false` by default. Boolean.
 - `telemetry_enabled`: `false` by default. Boolean. When `true`, enables anonymous usage telemetry.
 - `telemetry_installation_id`: Random UUID generated locally when telemetry is first enabled. Persists across runs. Not derived from hardware or identity.
+- `feedback_prompts_enabled`: `true` by default. Boolean. When `true`, enables feedback prompts after a minimum number of commands.
+- `feedback_prompt_min_commands`: `5` by default. Integer ≥ 0. Minimum commands before a feedback prompt may appear.
+- `feedback_commands_since_prompt`: `0` by default. Integer ≥ 0. Internal counter tracking commands since last prompt.
+- `community_messages_enabled`: `true` by default. Boolean. When `true`, enables randomized community messages after commands.
+- `community_message_probability`: `0.15` by default. Float between 0.0 and 1.0. Probability of showing a community message after an eligible command.
 
 ## Interactive Configuration UI
 

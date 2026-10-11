@@ -14,6 +14,8 @@ OTPilot is a local-first command-line tool for retrieving one-time passwords fro
 - **Opt-in telemetry:** usage telemetry is disabled by default and is sent only if you explicitly enable it.
 - **Credential storage:** credentials are stored through your operating system's credential vault rather than in the TOML configuration file.
 - **Cross-platform CLI:** Windows, macOS, and Linux with X11 are supported. Linux Wayland is not currently supported.
+- **Background daemon:** persistent OTP polling via `otpilot daemon` (Windows, macOS, Linux).
+- **Community messages:** occasional randomized links to feedback, issues, and discussions (configurable).
 
 ## Get started
 
@@ -53,8 +55,55 @@ Follow the prompts shown by the CLI. The `fetch --copy` command copies the detec
 | `otpilot telemetry enable` | Explicitly enable optional telemetry |
 | `otpilot telemetry disable` | Disable telemetry |
 | `otpilot logout you@gmail.com` | Remove saved account credentials |
+| `otpilot daemon start` | Start background OTP daemon |
+| `otpilot daemon stop` | Stop background OTP daemon |
+| `otpilot daemon status` | Check daemon status |
+| `otpilot daemon install` | Install daemon service |
+| `otpilot daemon enable-autostart` | Enable daemon on login |
 
 Run `otpilot --help` or consult the [CLI reference](docs/cli-reference.md) for details.
+
+## Background daemon
+
+The `otpilot daemon` command manages a persistent background service that polls for new OTPs and copies them to the clipboard, similar to `otpilot watch` but running independently of your terminal session.
+
+```bash
+# Install and start the daemon
+otpilot daemon install
+otpilot daemon start
+
+# Enable autostart on login
+otpilot daemon enable-autostart
+
+# Check status
+otpilot daemon status
+
+# Stop and uninstall
+otpilot daemon stop
+otpilot daemon uninstall
+```
+
+Platform implementations:
+- **Windows**: Background process with PID file, optional Registry autostart
+- **macOS**: Per-user `launchd` LaunchAgent
+- **Linux**: `systemd --user` service (preferred) or background process fallback
+
+The daemon reuses your existing configuration and credentials. Run `otpilot doctor` to diagnose daemon status.
+
+## Community messages
+
+After successful interactive commands, OTPilot may occasionally display a randomized community message (default 15% probability):
+
+- **Review** — "Enjoying OTPilot? Share your review: https://jenil-otpilot.vercel.app/feedback"
+- **Issues** — "Found a bug or issue? Report it here: https://github.com/CodeWithJenil/otpilot3.0/issues"
+- **Discussions** — "Have an idea or question? Join the discussion: https://github.com/CodeWithJenil/otpilot3.0/discussions"
+
+This is a lightweight, offline feature. Configure or disable via:
+
+```bash
+otpilot config set preferences.community_messages_enabled false
+otpilot config set preferences.community_message_probability 0.05
+```
 
 ## Platform notes
 
@@ -71,6 +120,8 @@ OTPilot is designed to keep email retrieval local and credentials out of plain-t
 - Credentials use the operating system credential vault through `keyring` (macOS Keychain, Windows Credential Manager, or a supported Linux Secret Service backend).
 - OTP values copied with `fetch --copy` are not printed to terminal output by that command.
 - Telemetry is **off by default**. You can inspect its status and enable or disable it with the commands above.
+- Community messages make no network requests and collect no data.
+- Feedback submissions are optional and use the existing website form.
 - Review the [privacy policy](privacy.md) and [security guidance](security.md) before use.
 
 As with any tool that accesses email, review the permissions you grant and protect your account credentials.

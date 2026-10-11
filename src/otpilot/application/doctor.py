@@ -21,6 +21,7 @@ from otpilot.domain.errors import (
 from otpilot.domain.models import AccountId, ProviderId
 from otpilot.domain.providers import ProviderRegistry
 from otpilot.domain.state import RuntimeState
+from otpilot.infrastructure.daemon import create_daemon_manager
 
 _CONNECTIVITY_TIMEOUT_NOTE = "IMAP checks use the provider timeout and do not download messages."
 
@@ -62,13 +63,14 @@ class DoctorService:
         self._append_probe("Clipboard", self.platform.clipboard_check)
         self._append_probe("Hotkeys", self.platform.hotkey_check)
         self._extend_probe("Dependencies", self.platform.dependency_checks)
+        self._daemon_checks()
         runtime = RuntimeState(
             authenticated=stored is not None,
             connected=any(
                 check.category == "Connectivity" and check.status is CheckStatus.PASS
                 for check in self._checks
             ),
-            background_running=False,
+            background_running=self._is_daemon_running(),
             provider_available=any(
                 check.name == "Provider" and check.status is CheckStatus.PASS
                 for check in self._checks
@@ -80,6 +82,91 @@ class DoctorService:
             ),
         )
         return DiagnosticReport(checks=tuple(self._checks), runtime=runtime)
+
+    def _daemon_checks(self) -> None:
+        """Check daemon installation and runtime status."""
+        try:
+            manager = create_daemon_manager()
+        except Exception as exc:
+            self._checks.append(
+                DiagnosticCheck(
+                    "Daemon",
+                    "Manager",
+                    CheckStatus.FAIL,
+                    f"Daemon manager could not be created: {exc}",
+                    "Ensure the platform is supported (Windows, macOS, Linux).",
+                )
+            )
+            return
+
+        status = manager.status()
+        if not status.installed:
+            self._checks.append(
+                DiagnosticCheck(
+                    "Daemon",
+                    "Installation",
+                    CheckStatus.WARN,
+                    "Daemon is not installed.",
+                    "Run `otpilot daemon install` to set up background OTP polling.",
+                )
+            )
+        else:
+            self._checks.append(
+                DiagnosticCheck(
+                    "Daemon",
+                    "Installation",
+                    CheckStatus.PASS,
+                    "Daemon is installed.",
+                )
+            )
+
+        if status.running:
+            self._checks.append(
+                DiagnosticCheck(
+                    "Daemon",
+                    "Status",
+                    CheckStatus.PASS,
+                    f"Daemon is running (PID: {status.pid}).",
+                )
+            )
+        else:
+            self._checks.append(
+                DiagnosticCheck(
+                    "Daemon",
+                    "Status",
+                    CheckStatus.WARN,
+                    "Daemon is installed but not running.",
+                    "Run `otpilot daemon start` to start background OTP polling.",
+                )
+            )
+
+        if status.autostart_enabled:
+            self._checks.append(
+                DiagnosticCheck(
+                    "Daemon",
+                    "Autostart",
+                    CheckStatus.PASS,
+                    "Daemon autostart is enabled.",
+                )
+            )
+        else:
+            self._checks.append(
+                DiagnosticCheck(
+                    "Daemon",
+                    "Autostart",
+                    CheckStatus.WARN,
+                    "Daemon autostart is disabled.",
+                    "Run `otpilot daemon enable-autostart` to start daemon on login.",
+                )
+            )
+
+    def _is_daemon_running(self) -> bool:
+        """Check if daemon is currently running."""
+        try:
+            manager = create_daemon_manager()
+            return manager.is_running()
+        except Exception:
+            return False
 
     def _configuration_validity(self) -> tuple[AppConfig | None, bool]:
         try:

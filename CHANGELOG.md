@@ -1,5 +1,43 @@
 # Changelog
 
+## 3.1.2 - 2026-10-11
+
+### Added
+- **Cross-platform daemon support** (`otpilot daemon`):
+  - Windows: Background process with PID file, optional autostart via Registry
+  - macOS: Per-user `launchd` LaunchAgent with `launchctl bootstrap`
+  - Linux: `systemd --user` service with fallback to background process
+  - Commands: `install`, `uninstall`, `start`, `stop`, `restart`, `status`, `enable-autostart`, `disable-autostart`
+  - Daemon runs `otpilot watch` internally for persistent background OTP polling
+  - Single-instance enforcement, stale PID cleanup, graceful shutdown
+- **Feedback page integration**:
+  - Registered `/feedback` route on website (https://jenil-otpilot.vercel.app/feedback)
+  - Added Feedback link to website footer
+  - Reuses existing Neon PostgreSQL schema and API endpoint
+  - Fixed `UserPreferences` model with feedback prompt fields
+- **Randomized community messages** (15% default probability):
+  - Three messages: Review, Issues, Discussions links
+  - Shown after eligible successful interactive commands
+  - Configurable via `preferences.community_messages_enabled` and `preferences.community_message_probability`
+  - Suppressed for non-interactive, failed, and machine-readable commands
+  - OSC 8 hyperlink support in compatible terminals
+- **Daemon diagnostics** in `otpilot doctor`: Installation, running status, autostart checks
+- **New preference keys**: `feedback_prompts_enabled`, `feedback_prompt_min_commands`, `feedback_commands_since_prompt`, `community_messages_enabled`, `community_message_probability`
+
+### Changed
+- Updated `UserPreferences` model with feedback and community message fields
+- Extended `SettingsService` with parsing for new preference keys
+- Enhanced `TelemetryTyper` with community message display logic
+- Updated website to v3.1 with Feedback page route and footer link
+- Updated CLI reference, configuration guide, and troubleshooting documentation
+
+### Privacy
+- Community messages are fully offline (no network requests)
+- No telemetry collected for community message feature
+- Feedback submissions use existing opt-in Neon database (no auto-collection)
+- Daemon reuses existing credential storage (OS keyring) and configuration
+- No OTPs, credentials, or sensitive data logged by daemon
+
 ## 3.1.0 - 2026-09-27
 
 ### Added

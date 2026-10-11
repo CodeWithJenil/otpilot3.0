@@ -135,6 +135,13 @@ when stdin is not a TTY.
 - `preferences.theme` — UI theme: `system`, `light`, or `dark` (default: `system`).
 - `preferences.notifications_enabled` — Enable desktop notifications (default: `true`).
 - `preferences.auto_paste_enabled` — Auto-paste OTP after copy (default: `false`).
+- `preferences.telemetry_enabled` — Enable anonymous usage telemetry (default: `false`).
+- `preferences.telemetry_installation_id` — Installation ID for telemetry (auto-generated).
+- `preferences.feedback_prompts_enabled` — Enable feedback prompts after commands (default: `true`).
+- `preferences.feedback_prompt_min_commands` — Minimum commands before feedback prompt (default: `5`).
+- `preferences.feedback_commands_since_prompt` — Internal counter (default: `0`).
+- `preferences.community_messages_enabled` — Enable randomized community messages (default: `true`).
+- `preferences.community_message_probability` — Probability of showing a community message (default: `0.15`, range: `0.0` to `1.0`).
 
 ### Notes
 
@@ -143,6 +150,44 @@ when stdin is not a TTY.
 - The `config_dir` setting is derived from the platform config path and cannot be changed via `config set`.
 - Invalid values are rejected with clear error messages and non-zero exit codes.
 - Configuration writes are atomic.
+
+## `otpilot daemon`
+
+Manage the OTPilot background daemon for persistent OTP polling.
+
+### Subcommands
+
+- `otpilot daemon install [--autostart]` — Install the daemon (create service files). Use `--autostart` to enable automatic startup on login.
+- `otpilot daemon uninstall` — Uninstall the daemon (remove service files).
+- `otpilot daemon start` — Start the daemon.
+- `otpilot daemon stop` — Stop the daemon.
+- `otpilot daemon restart` — Restart the daemon.
+- `otpilot daemon status` — Show daemon status (installed, running, PID, autostart).
+- `otpilot daemon enable-autostart` — Enable daemon autostart on login.
+- `otpilot daemon disable-autostart` — Disable daemon autostart on login.
+- `otpilot daemon run-internal` — Internal command to run the daemon watch loop (not for direct use).
+
+### Platform Implementation
+
+- **Windows**: Background process with PID file (`%LOCALAPPDATA%\otpilot\daemon.pid`). Optional autostart via Windows Registry `Run` key.
+- **macOS**: Per-user `launchd` LaunchAgent (`~/Library/LaunchAgents/com.jenil.otpilot.plist`). Uses `launchctl bootstrap gui/$(id -u)`.
+- **Linux**: Prefers `systemd --user` (`~/.config/systemd/user/otpilot.service`). Falls back to background process with PID file (`~/.local/state/otpilot/daemon.pid`) if systemd is unavailable.
+
+### Daemon Behavior
+
+The daemon runs `otpilot watch` internally, polling for new OTPs at the configured interval (`poll_interval_seconds`). It copies new OTPs to the clipboard without printing them. The daemon:
+- Reuses existing configuration and credentials from the OS keyring
+- Does not print OTPs or credentials to logs
+- Handles graceful shutdown on `stop` and `restart`
+- Prevents duplicate instances via PID file / service management
+- Cleans up stale PID files on startup
+
+### Notes
+
+- Daemon installation does not require administrator privileges (per-user only).
+- On Linux without systemd, autostart is not automatically configured; users may add to shell profile or crontab manually.
+- The daemon respects the same `poll_interval_seconds` setting as `otpilot watch`.
+- Run `otpilot doctor` to diagnose daemon status and configuration.
 
 ## `otpilot doctor`
 
@@ -161,6 +206,7 @@ Inspect local configuration, provider availability, credential backend support, 
 - **Clipboard** — Clipboard backend availability.
 - **Hotkeys** — Hotkey environment support (X11/Wayland on Linux, Accessibility on macOS).
 - **Dependencies** — Importability of required runtime dependencies.
+- **Daemon** — Daemon installation status, running status, autostart configuration.
 
 ### Status Values
 
@@ -248,6 +294,40 @@ This suggestion:
 - Persists across OTPilot runs.
 - Preserved when telemetry is disabled; reused if re-enabled later.
 - Not derived from MAC address, hostname, username, email, or hardware identifiers.
+
+## Community Messages
+
+After successful, interactive commands, OTPilot may occasionally display a randomized community message (default 15% probability). This is a lightweight, offline feature that never makes network requests.
+
+### Message Pool
+
+One of three messages is randomly selected:
+
+1. **Review** — "Enjoying OTPilot? Share your review: https://jenil-otpilot.vercel.app/feedback"
+2. **Issues** — "Found a bug or issue? Report it here: https://github.com/CodeWithJenil/otpilot3.0/issues"
+3. **Discussions** — "Have an idea or question? Join the discussion: https://github.com/CodeWithJenil/otpilot3.0/discussions"
+
+### Behavior
+
+- Shown after command output, before the telemetry suggestion (if any)
+- Only in interactive TTY sessions (`stdout.isatty()`)
+- Only for successful commands (exit code 0)
+- Suppressed for: `telemetry`, `version`, `daemon`, `config`, `doctor`, `login`, `logout` subcommands
+- At most one message per command
+- Supports OSC 8 hyperlinks in compatible terminals (plain URL shown as fallback)
+
+### Configuration
+
+- `preferences.community_messages_enabled` — Enable/disable (default: `true`)
+- `preferences.community_message_probability` — Probability 0.0–1.0 (default: `0.15`)
+
+```bash
+# Disable community messages
+otpilot config set preferences.community_messages_enabled false
+
+# Change probability to 5%
+otpilot config set preferences.community_message_probability 0.05
+```
 
 ## Documentation Requirement
 

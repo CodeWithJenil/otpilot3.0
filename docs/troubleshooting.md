@@ -40,6 +40,88 @@ On Linux, `keyring` requires a supported Secret Service daemon (such as GNOME Ke
 
 On Linux desktop environments using Wayland, global hotkey capture via `pynput` is unsupported due to Wayland security restrictions blocking global key logging. Switch to an X11 session or use `otpilot fetch` / `otpilot watch` commands.
 
+## Daemon Issues
+
+### Daemon not starting
+
+**Check status first:**
+```bash
+otpilot daemon status
+```
+
+**Common causes:**
+
+- **Not installed**: Run `otpilot daemon install` first.
+- **Already running**: The daemon prevents duplicate instances. Stop it first with `otpilot daemon stop`.
+- **Stale PID file** (Windows/Linux fallback): The daemon cleans up stale PID files on startup, but if cleanup fails, manually remove the PID file:
+  - Windows: `%LOCALAPPDATA%\otpilot\daemon.pid`
+  - Linux fallback: `~/.local/state/otpilot/daemon.pid`
+- **Missing credentials**: The daemon requires `otpilot login <email>` to be configured.
+- **Port/Systemd not available** (Linux): If `systemd --user` is unavailable, the daemon falls back to a background process. Check `otpilot doctor` for details.
+
+### Daemon installed but not running
+
+```bash
+otpilot daemon start
+```
+
+If it fails to start:
+- Check logs:
+  - Windows: `%LOCALAPPDATA%\otpilot\daemon.log`
+  - macOS: `~/Library/Logs/otpilot/daemon.err.log`
+  - Linux systemd: `journalctl --user -u otpilot`
+  - Linux fallback: `~/.local/state/otpilot/daemon.log`
+- Verify credentials: `otpilot doctor` will show credential status.
+- Check for configuration errors: `otpilot config --non-interactive`
+
+### Daemon not starting on login (autostart)
+
+**Windows:**
+- Autostart uses the Windows Registry `Run` key. Verify with `otpilot daemon status` (shows `Autostart: Enabled`).
+- If disabled, run `otpilot daemon enable-autostart`.
+- Some antivirus/security software may block Registry modifications.
+
+**macOS:**
+- Uses `launchd` LaunchAgent at `~/Library/LaunchAgents/com.jenil.otpilot.plist`.
+- Verify with `launchctl list | grep otpilot`.
+- If not loading, check `launchctl print gui/$(id -u)` for errors.
+- Ensure the plist file exists and is valid: `plutil -lint ~/Library/LaunchAgents/com.jenil.otpilot.plist`.
+
+**Linux (systemd --user):**
+- Service file: `~/.config/systemd/user/otpilot.service`
+- Enable: `otpilot daemon enable-autostart` (runs `systemctl --user enable otpilot`)
+- Check status: `systemctl --user is-enabled otpilot`
+- View logs: `journalctl --user -u otpilot -f`
+
+**Linux (fallback - no systemd):**
+- Autostart is not automatically configured for the fallback mode.
+- Manually add to shell profile (`.bashrc`, `.zshrc`) or use `crontab @reboot`:
+  ```bash
+  @reboot /path/to/python -m otpilot.cli.app daemon run-internal >> ~/.local/state/otpilot/daemon.log 2>&1
+  ```
+
+### Daemon running but not polling OTPs
+
+- Verify the daemon is actually the watch service: `otpilot daemon status` should show running.
+- Check the poll interval: `otpilot config get poll_interval_seconds` (default 30s).
+- Check logs for IMAP/authentication errors.
+- Run `otpilot doctor` to verify connectivity and credentials.
+
+### Daemon stop/restart not working
+
+- **Windows**: Uses `taskkill` (graceful then force). If stuck, manually kill via Task Manager.
+- **macOS**: Uses `launchctl bootout`. If stuck, `launchctl remove com.jenil.otpilot`.
+- **Linux systemd**: Uses `systemctl --user stop/restart`. If stuck, `systemctl --user kill otpilot`.
+- **Linux fallback**: Sends SIGTERM then SIGKILL. Check PID file and process table.
+
+### Uninstalling the daemon
+
+```bash
+otpilot daemon uninstall
+```
+
+This stops the daemon and removes all service files (plist, systemd unit, PID files, logs, registry entries).
+
 ## Documentation looks stale
 
 Open an issue or pull request. Public behavior changes are incomplete unless the relevant documentation is updated.
@@ -57,6 +139,9 @@ Use `otpilot doctor` to diagnose installation, configuration, and runtime issues
 - **macOS Accessibility permission not granted**: Grant Accessibility access to your terminal under `System Settings > Privacy & Security > Accessibility`.
 - **Linux Wayland session**: Global hotkeys require X11. Switch to an X11 session or use `otpilot fetch` / `otpilot watch`.
 - **Missing or broken dependencies**: Reinstall OTPilot with `pip install --force-reinstall otpilot`.
+- **Daemon not installed**: Run `otpilot daemon install` to set up background OTP polling.
+- **Daemon installed but not running**: Run `otpilot daemon start`.
+- **Daemon autostart disabled**: Run `otpilot daemon enable-autostart`.
 
 ### Offline Mode
 

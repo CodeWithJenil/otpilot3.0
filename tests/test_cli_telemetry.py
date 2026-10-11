@@ -159,6 +159,6 @@ def test_telemetry_suggestion_not_in_machine_output(monkeypatch, tmp_path) -> No
     result = runner.invoke(app, ["version"])
 
     assert result.exit_code == 0
-    assert "3.1.0" in result.stdout
+    assert "3.1.2" in result.stdout
     # Should not have telemetry suggestion in machine-readable output
     assert "Telemetry is currently disabled" not in result.stdout

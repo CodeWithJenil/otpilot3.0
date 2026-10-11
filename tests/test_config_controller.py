@@ -125,6 +125,11 @@ class TestSettingsMenu:
             "preferences.auto_paste_enabled",
             "preferences.telemetry_enabled",
             "preferences.telemetry_installation_id",
+            "preferences.feedback_prompts_enabled",
+            "preferences.feedback_prompt_min_commands",
+            "preferences.feedback_commands_since_prompt",
+            "preferences.community_messages_enabled",
+            "preferences.community_message_probability",
             RESET_ACTION_KEY,
             "__action__exit",
         ]
@@ -176,6 +181,11 @@ class TestSettingsMenu:
             "preferences.auto_paste_enabled",
             "preferences.telemetry_enabled",
             "preferences.telemetry_installation_id",
+            "preferences.feedback_prompts_enabled",
+            "preferences.feedback_prompt_min_commands",
+            "preferences.feedback_commands_since_prompt",
+            "preferences.community_messages_enabled",
+            "preferences.community_message_probability",
             RESET_ACTION_KEY,
             "__action__exit",
         ]
@@ -580,7 +590,7 @@ class TestControllerReset:
     def test_reset_confirmed(self, tmp_path) -> None:
         service = make_service(tmp_path)
         service.set("poll_interval_seconds", "10")
-        controller = make_controller(service, down(10), "\r", "\r", "\x1b")
+        controller = make_controller(service, down(15), "\r", "\r", "\x1b")
         controller.hotkey_capturer = MockHotkeyCapturer()
 
         controller.run()
@@ -592,7 +602,7 @@ class TestControllerReset:
     def test_reset_cancelled_with_escape(self, tmp_path) -> None:
         service = make_service(tmp_path)
         service.set("poll_interval_seconds", "10")
-        controller = make_controller(service, down(10), "\r", "\x1b", "\x1b")
+        controller = make_controller(service, down(15), "\r", "\x1b", "\x1b")
         controller.hotkey_capturer = MockHotkeyCapturer()
 
         controller.run()
@@ -603,7 +613,7 @@ class TestControllerReset:
     def test_reset_cancelled_with_no(self, tmp_path) -> None:
         service = make_service(tmp_path)
         service.set("poll_interval_seconds", "10")
-        controller = make_controller(service, down(10), "\r", right(), "\r", "\x1b")
+        controller = make_controller(service, down(15), "\r", right(), "\r", "\x1b")
         controller.hotkey_capturer = MockHotkeyCapturer()
 
         controller.run()

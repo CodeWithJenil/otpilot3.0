@@ -8,6 +8,12 @@ const Footer = () => (
       <span className="text-sm text-muted-foreground font-body">Built with Python</span>
       <div className="flex items-center gap-4 flex-wrap justify-center">
         <Link
+          to="/feedback"
+          className="text-sm text-muted-foreground hover:text-primary font-mono transition-colors duration-200"
+        >
+          Feedback
+        </Link>
+        <Link
           to="/privacy"
           className="text-sm text-muted-foreground hover:text-primary font-mono transition-colors duration-200"
         >

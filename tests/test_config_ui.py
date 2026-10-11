@@ -118,6 +118,11 @@ class TestSettingsMenu:
             "preferences.auto_paste_enabled",
             "preferences.telemetry_enabled",
             "preferences.telemetry_installation_id",
+            "preferences.feedback_prompts_enabled",
+            "preferences.feedback_prompt_min_commands",
+            "preferences.feedback_commands_since_prompt",
+            "preferences.community_messages_enabled",
+            "preferences.community_message_probability",
             "__action__reset",
             "__action__exit",
         ]
@@ -169,6 +174,11 @@ class TestSettingsMenu:
             "preferences.auto_paste_enabled",
             "preferences.telemetry_enabled",
             "preferences.telemetry_installation_id",
+            "preferences.feedback_prompts_enabled",
+            "preferences.feedback_prompt_min_commands",
+            "preferences.feedback_commands_since_prompt",
+            "preferences.community_messages_enabled",
+            "preferences.community_message_probability",
             "__action__reset",
             "__action__exit",
         ]

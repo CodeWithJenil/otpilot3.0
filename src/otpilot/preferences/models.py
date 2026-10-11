@@ -2,7 +2,7 @@
 
 import re
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class UserPreferences(BaseModel):
@@ -14,6 +14,13 @@ class UserPreferences(BaseModel):
     auto_paste_enabled: bool = False
     telemetry_enabled: bool = False
     telemetry_installation_id: str | None = None
+    # Feedback prompt preferences
+    feedback_prompts_enabled: bool = True
+    feedback_prompt_min_commands: int = Field(default=5, ge=0)
+    feedback_commands_since_prompt: int = Field(default=0, ge=0)
+    # Community message preferences (randomized messages after commands)
+    community_messages_enabled: bool = True
+    community_message_probability: float = Field(default=0.15, ge=0.0, le=1.0)
 
     @field_validator("telemetry_installation_id")
     @classmethod

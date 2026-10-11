@@ -1,6 +1,7 @@
 """Application-layer ports implemented by infrastructure adapters."""
 
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
@@ -108,3 +109,42 @@ class HotkeyListener(Protocol):
 class NotificationSink(Protocol):
     def send(self, title: str, body: str) -> None:
         """Send a local desktop notification."""
+
+
+class DaemonManager(Protocol):
+    """Platform-specific daemon lifecycle management."""
+
+    def install(self, autostart: bool = False) -> None:
+        """Install the daemon (create service files, register with OS)."""
+
+    def uninstall(self) -> None:
+        """Uninstall the daemon (remove service files, unregister from OS)."""
+
+    def start(self) -> None:
+        """Start the daemon."""
+
+    def stop(self) -> None:
+        """Stop the daemon."""
+
+    def restart(self) -> None:
+        """Restart the daemon."""
+
+    def status(self) -> DaemonStatus:
+        """Return the current daemon status."""
+
+    def is_installed(self) -> bool:
+        """Check if the daemon is installed (service files exist)."""
+
+    def is_running(self) -> bool:
+        """Check if the daemon process is currently running."""
+
+
+@dataclass(frozen=True, slots=True)
+class DaemonStatus:
+    """Daemon status information."""
+
+    installed: bool
+    running: bool
+    pid: int | None = None
+    autostart_enabled: bool = False
+    error: str | None = None

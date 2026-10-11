@@ -29,6 +29,11 @@ PREFERENCE_KEYS = (
     "preferences.auto_paste_enabled",
     "preferences.telemetry_enabled",
     "preferences.telemetry_installation_id",
+    "preferences.feedback_prompts_enabled",
+    "preferences.feedback_prompt_min_commands",
+    "preferences.feedback_commands_since_prompt",
+    "preferences.community_messages_enabled",
+    "preferences.community_message_probability",
 )
 SUPPORTED_KEYS = CONFIG_KEYS + PREFERENCE_KEYS + ("preferences",)
 SETTABLE_KEYS = tuple(key for key in SUPPORTED_KEYS if key not in ("config_dir", "preferences"))
@@ -131,7 +136,7 @@ def _parse_value(key: str, value: str) -> object:
         return backend
     if key in {"preferences.notifications_enabled", "preferences.auto_paste_enabled"}:
         return _parse_bool(value)
-    if key in {"preferences.telemetry_enabled"}:
+    if key in {"preferences.telemetry_enabled", "preferences.feedback_prompts_enabled", "preferences.community_messages_enabled"}:
         return _parse_bool(value)
     if key == "preferences.theme":
         theme = value.strip().lower()
@@ -140,6 +145,19 @@ def _parse_value(key: str, value: str) -> object:
         return theme
     if key == "preferences.telemetry_installation_id":
         return value.strip() or None
+    if key in {"preferences.feedback_prompt_min_commands", "preferences.feedback_commands_since_prompt"}:
+        try:
+            return int(value)
+        except ValueError as exc:
+            raise ConfigurationError(f"{key} must be an integer.") from exc
+    if key == "preferences.community_message_probability":
+        try:
+            prob = float(value)
+        except ValueError as exc:
+            raise ConfigurationError("community_message_probability must be a number between 0.0 and 1.0.") from exc
+        if not 0.0 <= prob <= 1.0:
+            raise ConfigurationError("community_message_probability must be between 0.0 and 1.0.")
+        return prob
     if key == "hotkey":
         return value
     raise ConfigurationError(f"Unknown configuration key '{key}'.")
@@ -182,6 +200,11 @@ class SettingsService:
             "preferences.auto_paste_enabled": preferences.auto_paste_enabled,
             "preferences.telemetry_enabled": preferences.telemetry_enabled,
             "preferences.telemetry_installation_id": preferences.telemetry_installation_id,
+            "preferences.feedback_prompts_enabled": preferences.feedback_prompts_enabled,
+            "preferences.feedback_prompt_min_commands": preferences.feedback_prompt_min_commands,
+            "preferences.feedback_commands_since_prompt": preferences.feedback_commands_since_prompt,
+            "preferences.community_messages_enabled": preferences.community_messages_enabled,
+            "preferences.community_message_probability": preferences.community_message_probability,
             "preferences": preferences,
         }
         entries: list[SettingEntry] = []
