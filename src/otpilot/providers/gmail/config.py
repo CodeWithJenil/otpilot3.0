@@ -14,10 +14,11 @@ GMAIL_DESCRIPTOR = ProviderDescriptor(
 GMAIL_IMAP = ImapConnectionConfig(host="imap.gmail.com", port=993, ssl=True, mailbox="INBOX")
 
 
-def create_gmail_provider() -> ImapProvider:
+def create_gmail_provider(session_renewal_hours: float = 23.0) -> ImapProvider:
     return ImapProvider(
         descriptor=GMAIL_DESCRIPTOR,
         connection=GMAIL_IMAP,
         search_strategy=ImapSearchStrategy(),
+        session_renewal_hours=session_renewal_hours,
     )
 

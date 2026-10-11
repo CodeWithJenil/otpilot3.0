@@ -18,10 +18,86 @@ class TestDaemonCommands:
         from otpilot.cli.commands.daemon import run_internal
         assert callable(run_internal)
 
-    def test_build_daemon_watch_service(self) -> None:
-        """Test that build_daemon_watch_service can be imported."""
-        from otpilot.cli.commands.daemon import build_daemon_watch_service
-        assert callable(build_daemon_watch_service)
+    def test_status_command_running(self, monkeypatch) -> None:
+        """Test status command when daemon is running."""
+        from typer.testing import CliRunner
+        runner = CliRunner()
+
+        mock_mgr = MagicMock()
+        mock_mgr.status.return_value = DaemonStatus(
+            installed=True,
+            running=True,
+            pid=5555,
+            autostart_enabled=True,
+        )
+        monkeypatch.setattr(daemon_commands, "_get_daemon_manager", lambda: mock_mgr)
+
+        result = runner.invoke(daemon_commands.app, ["status"])
+        assert result.exit_code == 0
+        assert "Installed: Yes" in result.output
+        assert "Running:   Yes" in result.output
+        assert "PID:       5555" in result.output
+        assert "Autostart: Enabled" in result.output
+
+    def test_status_command_stopped(self, monkeypatch) -> None:
+        """Test status command when daemon is stopped."""
+        from typer.testing import CliRunner
+        runner = CliRunner()
+
+        mock_mgr = MagicMock()
+        mock_mgr.status.return_value = DaemonStatus(
+            installed=True,
+            running=False,
+            pid=None,
+            autostart_enabled=False,
+        )
+        monkeypatch.setattr(daemon_commands, "_get_daemon_manager", lambda: mock_mgr)
+
+        result = runner.invoke(daemon_commands.app, ["status"])
+        assert result.exit_code == 0
+        assert "Installed: Yes" in result.output
+        assert "Running:   No" in result.output
+        assert "PID:" not in result.output
+        assert "Autostart: Disabled" in result.output
+
+    def test_start_command_success(self, monkeypatch) -> None:
+        """Test start command success."""
+        from typer.testing import CliRunner
+        runner = CliRunner()
+
+        mock_mgr = MagicMock()
+        monkeypatch.setattr(daemon_commands, "_get_daemon_manager", lambda: mock_mgr)
+
+        result = runner.invoke(daemon_commands.app, ["start"])
+        assert result.exit_code == 0
+        assert "Daemon started." in result.output
+        mock_mgr.start.assert_called_once()
+
+    def test_start_command_failure(self, monkeypatch) -> None:
+        """Test start command failure reports error and exits non-zero."""
+        from typer.testing import CliRunner
+        runner = CliRunner()
+
+        mock_mgr = MagicMock()
+        mock_mgr.start.side_effect = OTPilotError("Process died immediately")
+        monkeypatch.setattr(daemon_commands, "_get_daemon_manager", lambda: mock_mgr)
+
+        result = runner.invoke(daemon_commands.app, ["start"])
+        assert result.exit_code == 1
+        assert "Process died immediately" in result.output
+
+    def test_stop_command_success(self, monkeypatch) -> None:
+        """Test stop command success."""
+        from typer.testing import CliRunner
+        runner = CliRunner()
+
+        mock_mgr = MagicMock()
+        monkeypatch.setattr(daemon_commands, "_get_daemon_manager", lambda: mock_mgr)
+
+        result = runner.invoke(daemon_commands.app, ["stop"])
+        assert result.exit_code == 0
+        assert "Daemon stopped." in result.output
+        mock_mgr.stop.assert_called_once()
 
 
 class TestWindowsDaemonManager:
@@ -60,7 +136,6 @@ class TestWindowsDaemonManager:
         """Test process running check with mocked tasklist."""
         def mock_run(*args, **kwargs):
             result = MagicMock()
-            # args[0] is the command list, e.g., ['tasklist', '/FI', 'PID eq 1234', '/NH']
             cmd_str = " ".join(args[0]) if args else ""
             if "1234" in cmd_str:
                 result.stdout = "python.exe                   1234 Console                    1     10,000 K"
@@ -72,6 +147,25 @@ class TestWindowsDaemonManager:
 
         assert mock_manager._is_process_running(1234) is True
         assert mock_manager._is_process_running(9999) is False
+
+    def test_cleanup_stale_or_invalid_pid(self, mock_manager, monkeypatch):
+        """Test cleaning up stale or corrupt PID files on Windows."""
+        # Non-running stale PID
+        mock_manager._write_pid(9999)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: False)
+        mock_manager._cleanup_stale_pid()
+        assert not mock_manager._pid_file.exists()
+
+        # Running valid PID
+        mock_manager._write_pid(1234)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: True)
+        mock_manager._cleanup_stale_pid()
+        assert mock_manager._pid_file.exists()
+
+        # Corrupt / non-numeric PID file
+        mock_manager._pid_file.write_text("invalid_pid", encoding="utf-8")
+        mock_manager._cleanup_stale_pid()
+        assert not mock_manager._pid_file.exists()
 
 
 class TestMacOSDaemonManager:
@@ -90,6 +184,7 @@ class TestMacOSDaemonManager:
         manager._log_dir = tmp_path / "logs"
         manager._stdout_log = tmp_path / "logs" / "daemon.out.log"
         manager._stderr_log = tmp_path / "logs" / "daemon.err.log"
+        manager._pid_file = tmp_path / "logs" / "daemon.pid"
 
         return manager
 
@@ -105,6 +200,11 @@ class TestMacOSDaemonManager:
         assert plist["RunAtLoad"] is False
         assert plist["KeepAlive"]["Crashed"] is True
 
+    def test_build_plist_autostart(self, mock_manager):
+        """Test plist generation with autostart=True."""
+        plist = mock_manager._build_plist(autostart=True)
+        assert plist["RunAtLoad"] is True
+
     def test_write_plist(self, mock_manager):
         """Test writing plist file."""
         mock_manager._write_plist()
@@ -114,6 +214,200 @@ class TestMacOSDaemonManager:
         with open(mock_manager._plist_path, "rb") as f:
             data = plistlib.load(f)
         assert data["Label"] == "com.jenil.otpilot"
+        assert data["RunAtLoad"] is False
+
+    def test_pid_file_operations(self, mock_manager):
+        """Test PID file read/write/clear operations."""
+        assert mock_manager._read_pid() is None
+        mock_manager._write_pid(4321)
+        assert mock_manager._read_pid() == 4321
+        mock_manager._clear_pid()
+        assert mock_manager._read_pid() is None
+
+    def test_cleanup_stale_or_invalid_pid(self, mock_manager, monkeypatch):
+        """Test cleaning up stale or corrupt PID files."""
+        # Non-running stale PID
+        mock_manager._write_pid(9999)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: False)
+        mock_manager._cleanup_stale_pid()
+        assert not mock_manager._pid_file.exists()
+
+        # Running valid PID
+        mock_manager._write_pid(4321)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: True)
+        mock_manager._cleanup_stale_pid()
+        assert mock_manager._pid_file.exists()
+
+        # Corrupt / non-numeric PID file
+        mock_manager._pid_file.write_text("corrupted_data", encoding="utf-8")
+        mock_manager._cleanup_stale_pid()
+        assert not mock_manager._pid_file.exists()
+
+    def test_get_pid_from_launchctl_dict_format(self, mock_manager, monkeypatch):
+        """Test parsing dictionary output from launchctl list <label>."""
+        dict_output = """{
+\t"StandardOutPath" = "/Users/test/Library/Logs/otpilot/daemon.out.log";
+\t"LimitLoadToSessionType" = "Aqua";
+\t"Label" = "com.jenil.otpilot";
+\t"OnDemand" = true;
+\t"LastExitStatus" = 0;
+\t"PID" = 4321;
+\t"Program" = "/opt/homebrew/bin/python3";
+};"""
+
+        def mock_run(cmd, *args, **kwargs):
+            result = MagicMock()
+            if cmd == ["launchctl", "list", mock_manager.LABEL]:
+                result.returncode = 0
+                result.stdout = dict_output
+            else:
+                result.returncode = 1
+                result.stdout = ""
+            return result
+
+        monkeypatch.setattr("subprocess.run", mock_run)
+        assert mock_manager._get_pid_from_launchctl() == 4321
+
+    def test_get_pid_from_launchctl_stopped_no_pid(self, mock_manager, monkeypatch):
+        """Test parsing launchctl list when service is stopped (no PID key)."""
+        stopped_output = """{
+\t"Label" = "com.jenil.otpilot";
+\t"OnDemand" = true;
+\t"LastExitStatus" = 0;
+};"""
+
+        def mock_run(cmd, *args, **kwargs):
+            result = MagicMock()
+            if cmd == ["launchctl", "list", mock_manager.LABEL]:
+                result.returncode = 0
+                result.stdout = stopped_output
+            else:
+                result.returncode = 0
+                result.stdout = "PID\tStatus\tLabel\n-\t0\tcom.jenil.otpilot\n"
+            return result
+
+        monkeypatch.setattr("subprocess.run", mock_run)
+        assert mock_manager._get_pid_from_launchctl() is None
+
+    def test_get_pid_from_launchctl_table_fallback(self, mock_manager, monkeypatch):
+        """Test fallback to launchctl list table output."""
+        def mock_run(cmd, *args, **kwargs):
+            result = MagicMock()
+            if cmd == ["launchctl", "list", mock_manager.LABEL]:
+                result.returncode = 1
+                result.stdout = ""
+            elif cmd == ["launchctl", "list"]:
+                result.returncode = 0
+                result.stdout = "PID\tStatus\tLabel\n8888\t0\tcom.jenil.otpilot\n"
+            else:
+                result.returncode = 1
+                result.stdout = ""
+            return result
+
+        monkeypatch.setattr("subprocess.run", mock_run)
+        assert mock_manager._get_pid_from_launchctl() == 8888
+
+    def test_is_running(self, mock_manager, monkeypatch):
+        """Test is_running accurately checks process status."""
+        monkeypatch.setattr(mock_manager, "_get_pid_from_launchctl", lambda: 4321)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: pid == 4321)
+        assert mock_manager.is_running() is True
+
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: False)
+        assert mock_manager.is_running() is False
+
+        monkeypatch.setattr(mock_manager, "_get_pid_from_launchctl", lambda: None)
+        assert mock_manager.is_running() is False
+
+    def test_status_running_and_stopped(self, mock_manager, monkeypatch):
+        """Test status returns correct DaemonStatus for running and stopped states."""
+        mock_manager._write_plist()
+
+        # Running state
+        monkeypatch.setattr(mock_manager, "_get_pid_from_launchctl", lambda: 4321)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: True)
+        status = mock_manager.status()
+        assert status.installed is True
+        assert status.running is True
+        assert status.pid == 4321
+
+        # Stopped state
+        monkeypatch.setattr(mock_manager, "_get_pid_from_launchctl", lambda: None)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: False)
+        status_stopped = mock_manager.status()
+        assert status_stopped.installed is True
+        assert status_stopped.running is False
+        assert status_stopped.pid is None
+
+    def test_start_daemon_success(self, mock_manager, monkeypatch):
+        """Test starting the daemon successfully."""
+        is_running_state = [False]
+        monkeypatch.setattr(mock_manager, "_is_loaded_in_launchd", lambda: False)
+        monkeypatch.setattr(mock_manager, "_load_plist", lambda: True)
+
+        def mock_run(cmd, *args, **kwargs):
+            is_running_state[0] = True
+            result = MagicMock()
+            result.returncode = 0
+            result.stdout = "service spawned with pid: 4321"
+            return result
+
+        monkeypatch.setattr("subprocess.run", mock_run)
+        monkeypatch.setattr(mock_manager, "_get_pid_from_launchctl", lambda: 4321 if is_running_state[0] else None)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: is_running_state[0])
+
+        mock_manager.start()
+        assert mock_manager.is_running() is True
+        assert mock_manager._read_pid() == 4321
+
+    def test_start_daemon_failure(self, mock_manager, monkeypatch):
+        """Test daemon startup failure raises OTPilotError."""
+        monkeypatch.setattr(mock_manager, "_is_loaded_in_launchd", lambda: True)
+
+        def mock_run(cmd, *args, **kwargs):
+            result = MagicMock()
+            result.returncode = 0
+            return result
+
+        monkeypatch.setattr("subprocess.run", mock_run)
+        monkeypatch.setattr(mock_manager, "is_running", lambda: False)
+
+        with pytest.raises(OTPilotError, match="Daemon process failed to start"):
+            mock_manager.start()
+
+    def test_repeated_start_when_running(self, mock_manager, monkeypatch):
+        """Test repeated start returns early without re-launching."""
+        monkeypatch.setattr(mock_manager, "is_running", lambda: True)
+        mock_kickstart = MagicMock()
+        monkeypatch.setattr("subprocess.run", mock_kickstart)
+
+        mock_manager.start()
+        mock_kickstart.assert_not_called()
+
+    def test_repeated_stop(self, mock_manager, monkeypatch):
+        """Test repeated stop executes cleanly."""
+        monkeypatch.setattr(mock_manager, "_get_pid_from_launchctl", lambda: None)
+        monkeypatch.setattr(mock_manager, "_unload_plist", lambda: True)
+        mock_manager._write_pid(4321)
+
+        mock_manager.stop()
+        assert mock_manager._read_pid() is None
+
+        # Call again
+        mock_manager.stop()
+        assert mock_manager._read_pid() is None
+
+    def test_autostart_toggle(self, mock_manager, monkeypatch):
+        """Test enable_autostart and disable_autostart update the plist."""
+        monkeypatch.setattr(mock_manager, "_is_loaded_in_launchd", lambda: True)
+        mock_manager.install(autostart=False)
+        assert mock_manager._is_autostart_enabled() is False
+
+        mock_manager.enable_autostart()
+        assert mock_manager._is_autostart_enabled() is True
+
+        mock_manager.disable_autostart()
+        assert mock_manager._is_autostart_enabled() is False
 
 
 class TestLinuxDaemonManager:
@@ -181,6 +475,25 @@ class TestLinuxDaemonManager:
 
         mock_manager._clear_pid_fallback()
         assert mock_manager._get_pid_fallback() is None
+
+    def test_cleanup_stale_or_invalid_fallback_pid(self, mock_manager, monkeypatch):
+        """Test cleaning up stale or corrupt fallback PID files on Linux."""
+        # Non-running stale PID
+        mock_manager._write_pid_fallback(9999)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: False)
+        mock_manager._cleanup_stale_fallback_pid()
+        assert not mock_manager.FALLBACK_PID_FILE.exists()
+
+        # Running valid PID
+        mock_manager._write_pid_fallback(5678)
+        monkeypatch.setattr(mock_manager, "_is_process_running", lambda pid: True)
+        mock_manager._cleanup_stale_fallback_pid()
+        assert mock_manager.FALLBACK_PID_FILE.exists()
+
+        # Corrupt / non-numeric PID file
+        mock_manager.FALLBACK_PID_FILE.write_text("invalid_pid", encoding="utf-8")
+        mock_manager._cleanup_stale_fallback_pid()
+        assert not mock_manager.FALLBACK_PID_FILE.exists()
 
 
 class TestDaemonFactory:

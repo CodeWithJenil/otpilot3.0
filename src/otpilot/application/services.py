@@ -126,32 +126,88 @@ class FetchOtpService:
 
 @dataclass(slots=True)
 class WatchService:
+    """Monitor for new OTPs and copy them to the clipboard automatically.
+
+    Three monitoring modes are supported:
+
+    1. **Hotkey-enabled** ({\@literal hotkey_enabled=true}): Wait for the configured
+       global hotkey. Each valid hotkey activation triggers an immediate mailbox check.
+       Overlapping checks are prevented.
+
+    2. **IMAP IDLE** ({\@literal idle_provider} is set): Uses IMAP IDLE for
+       near-instant OTP detection. The provider must be authenticated.
+
+    3. **Polling fallback** (default): Checks the mailbox every {\@literal poll_interval_seconds}.
+       Both branches share the same duplicate-suppression logic via
+       ``processed_message_ids``.
+    """
+
     fetch_service: FetchOtpService
-    poll_interval_seconds: float = 30.0
+    poll_interval_seconds: float = 3.00
     sleep: Callable[[float], None] = field(default=sleep)
+    hotkey_enabled: bool = False
+    idle_provider: object | None = field(default=None)
+    idle_account_id: AccountId | None = field(default=None)
     status: Callable[[str], None] = field(default=lambda message: None)
+    # Set by the daemon factory to enable IMAP IDLE; None ⟹ polling fallback.
+    idle_provider: object | None = field(default=None)
+    idle_account_id: AccountId | None = field(default=None)
 
     def run(self) -> None:
+        """Run the watch loop until interrupted or a fatal error occurs."""
         processed_message_ids: set[str] = set()
         self.status("Watching for new OTPs...")
         try:
-            while True:
-                try:
-                    result = self.fetch_service.fetch()
-                except ExtractionError:
-                    result = None
-                except ProviderError as exc:
-                    self.status(f"Temporary provider failure; retrying: {exc}")
-                    result = None
-                if result is not None:
-                    message_id = result.candidate.source.message_id
-                    if message_id not in processed_message_ids:
+            if self.hotkey_enabled:
+                # ── Hotkey-enabled branch ─────────────────────────────────────
+                # Wait for the configured global hotkey.
+                # Each valid hotkey activation triggers an immediate mailbox check.
+                # Overlapping checks are prevented via the active lock.
+                from otpilot.infrastructure.hotkeys import PynputHotkeyListener
+                listener = PynputHotkeyListener()
+                listener.register(self.hotkey, self._on_hotkey_press)
+                listener.run()
+            elif self.idle_provider is not None and hasattr(self.idle_provider, "idle_fetch"):
+                # ── IMAP IDLE branch ─────────────────────────────────────────
+                # idle_provider is already authenticated by the daemon factory.
+                account_id = self.idle_account_id
+                criteria = SearchCriteria(since=datetime.now(UTC))
+                for email in self.idle_provider.idle_fetch(account_id, criteria):
+                    candidate = self.fetch_service.extractor.extract_best(email)
+                    if candidate is None:
+                        continue
+                    message_id = candidate.source.message_id
+                    if message_id in processed_message_ids:
+                        continue
+                    result = OtpResult(candidate=candidate)
+                    try:
                         self.fetch_service.copy_result(result)
                         processed_message_ids.add(message_id)
                         self.status("New OTP copied to clipboard.")
-                self.sleep(self.poll_interval_seconds)
+                    except OTPilotError as exc:
+                        self.status(f"Clipboard error: {exc}")
+            else:
+                # ── Polling fallback branch ───────────────────────────────────
+                while True:
+                    try:
+                        result = self.fetch_service.fetch()
+                    except ExtractionError:
+                        result = None
+                    except ProviderError as exc:
+                        self.status(f"Temporary provider failure; retrying: {exc}")
+                        result = None
+                    if result is not None:
+                        message_id = result.candidate.source.message_id
+                        if message_id not in processed_message_ids:
+                            self.fetch_service.copy_result(result)
+                            processed_message_ids.add(message_id)
+                            self.status("New OTP copied to clipboard.")
+                    self.sleep(self.poll_interval_seconds)
         except KeyboardInterrupt:
             self.status("Watch stopped.")
+        except OTPilotError as exc:
+            self.status(f"Daemon stopped due to error: {exc}")
+            raise
 
 
 @dataclass(slots=True)

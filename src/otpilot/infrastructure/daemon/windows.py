@@ -87,9 +87,11 @@ cd /d "{Path.home()}"
             return False
 
     def _cleanup_stale_pid(self) -> None:
-        """Remove stale PID file if process is not running."""
+        """Remove stale PID file if process is not running or file is invalid."""
+        if not self._pid_file.exists():
+            return
         pid = self._read_pid()
-        if pid is not None and not self._is_process_running(pid):
+        if pid is None or not self._is_process_running(pid):
             self._clear_pid()
 
     def install(self, autostart: bool = False) -> None:

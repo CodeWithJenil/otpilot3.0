@@ -44,17 +44,16 @@ Follow the prompts shown by the CLI. The `fetch --copy` command copies the detec
 
 | Command | Purpose |
 | --- | --- |
-| `otpilot login you@gmail.com` | Configure an email account |
+| `otpilot login` | Configure an email account (interactive prompts for email and App Password) |
 | `otpilot fetch` | Fetch and identify OTP candidates |
-| `otpilot fetch --copy` | Copy the selected OTP to the clipboard |
-| `otpilot watch` | Poll for new OTP messages |
-| `otpilot hotkey` | Run the global-hotkey workflow |
+| `otpilot fetch --copy` | Copy the selected OTP to the clipboard without printing the value |
+| `otpilot watch` | Unified monitoring for new OTP messages. Mode determined by ``hotkey_enabled`` config |
 | `otpilot config` | View or edit preferences |
 | `otpilot doctor` | Diagnose common setup issues |
 | `otpilot telemetry status` | Check telemetry status |
 | `otpilot telemetry enable` | Explicitly enable optional telemetry |
 | `otpilot telemetry disable` | Disable telemetry |
-| `otpilot logout you@gmail.com` | Remove saved account credentials |
+| `otpilot logout <account>` | Remove saved account credentials |
 | `otpilot daemon start` | Start background OTP daemon |
 | `otpilot daemon stop` | Stop background OTP daemon |
 | `otpilot daemon status` | Check daemon status |
@@ -131,6 +130,18 @@ As with any tool that accesses email, review the permissions you grant and prote
 OTPilot is organized into layers that separate the CLI, application services, domain logic, providers, and infrastructure. Its current email provider is Gmail over IMAP. Other IMAP providers are architectural possibilities, not currently advertised as supported providers.
 
 See [architecture.md](architecture.md) for the design and [developer-guide.md](developer-guide.md) for the development workflow.
+
+
+
+### Configuration
+
+- ``hotkey_enabled`` — Enable hotkey-based monitoring (default: ``false``). When
+  ``true``, ``otpilot watch`` and ``otpilot daemon`` use the configured global
+  hotkey instead of periodic polling. Set via ``otpilot config set
+  hotkey_enabled true``.
+- ``poll_interval_seconds`` — Watch polling interval in seconds (default:
+  ``3.0``, range: ``>0`` to ``3600``). Set via ``otpilot config set
+  poll_interval_seconds 5.0``.
 
 ## Documentation
 

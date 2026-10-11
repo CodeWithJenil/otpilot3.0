@@ -11,7 +11,7 @@ def test_config_rejects_secret_fields() -> None:
 
 
 def test_config_has_conservative_watch_poll_default() -> None:
-    assert AppConfig().poll_interval_seconds == 30.0
+    assert AppConfig().poll_interval_seconds == 3.0
 
 
 def test_config_has_default_hotkey() -> None:

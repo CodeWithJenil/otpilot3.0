@@ -47,8 +47,10 @@ class AppConfig(BaseModel):
     provider: ProviderConfig = Field(default_factory=ProviderConfig)
     credential_backend: CredentialBackendConfig = Field(default_factory=CredentialBackendConfig)
     config_dir: Path | None = None
-    poll_interval_seconds: float = Field(default=30.0, gt=0, le=3600)
+    poll_interval_seconds: float = Field(default=3.0, gt=0, le=3600)
+    session_renewal_hours: float = Field(default=23.0, gt=0, le=168)
     hotkey: str = "ctrl+shift+o"
+    hotkey_enabled: bool = False
 
     @field_validator("hotkey")
     @classmethod

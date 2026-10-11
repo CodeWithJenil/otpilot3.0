@@ -431,20 +431,20 @@ class TestControllerMenuFlow:
 
         controller.run()
 
-        assert service.snapshot().entry("poll_interval_seconds").value == 30.0
+        assert service.snapshot().entry("poll_interval_seconds").value == 3.0
         assert not (tmp_path / "config.toml").exists()
 
     def test_confirming_same_value_keeps_it(self, tmp_path) -> None:
         service = make_service(tmp_path)
         controller = make_controller(
             service,
-            down(3), "\r", "30.0", "\r", "\x1b",
+            down(3), "\r", "3.0", "\r", "\x1b",
         )
         controller.hotkey_capturer = MockHotkeyCapturer()
 
         controller.run()
 
-        assert service.snapshot().entry("poll_interval_seconds").value == 30.0
+        assert service.snapshot().entry("poll_interval_seconds").value == 3.0
 
     def test_empty_numeric_input_shows_error_and_stays(self, tmp_path) -> None:
         service = make_service(tmp_path)
@@ -458,7 +458,7 @@ class TestControllerMenuFlow:
 
         output = controller.renderer.console.file.getvalue()
         assert "must be a number" in output
-        assert service.snapshot().entry("poll_interval_seconds").value == 30.0
+        assert service.snapshot().entry("poll_interval_seconds").value == 3.0
 
     def test_empty_account_input_clears_account(self, tmp_path) -> None:
         service = make_service(tmp_path)
@@ -597,7 +597,7 @@ class TestControllerReset:
 
         assert not (tmp_path / "config.toml").exists()
         assert not (tmp_path / "preferences.toml").exists()
-        assert service.snapshot().entry("poll_interval_seconds").value == 30.0
+        assert service.snapshot().entry("poll_interval_seconds").value == 3.0
 
     def test_reset_cancelled_with_escape(self, tmp_path) -> None:
         service = make_service(tmp_path)

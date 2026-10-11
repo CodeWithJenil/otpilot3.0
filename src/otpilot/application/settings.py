@@ -21,7 +21,9 @@ CONFIG_KEYS = (
     "credential_backend.backend",
     "config_dir",
     "poll_interval_seconds",
+    "session_renewal_hours",
     "hotkey",
+    "hotkey_enabled",
 )
 PREFERENCE_KEYS = (
     "preferences.theme",
@@ -119,6 +121,11 @@ def _parse_value(key: str, value: str) -> object:
             return float(value)
         except ValueError as exc:
             raise ConfigurationError("poll_interval_seconds must be a number of seconds.") from exc
+    if key == "session_renewal_hours":
+        try:
+            return float(value)
+        except ValueError as exc:
+            raise ConfigurationError("session_renewal_hours must be a number of hours.") from exc
     if key == "provider.account":
         stripped = value.strip()
         return stripped or None
@@ -160,6 +167,8 @@ def _parse_value(key: str, value: str) -> object:
         return prob
     if key == "hotkey":
         return value
+    if key == "hotkey_enabled":
+        return _parse_bool(value)
     raise ConfigurationError(f"Unknown configuration key '{key}'.")
 
 
@@ -194,7 +203,9 @@ class SettingsService:
             "credential_backend.backend": config.credential_backend.backend,
             "config_dir": config.config_dir or self.config.path.parent,
             "poll_interval_seconds": config.poll_interval_seconds,
+            "session_renewal_hours": config.session_renewal_hours,
             "hotkey": config.hotkey,
+            "hotkey_enabled": config.hotkey_enabled,
             "preferences.theme": preferences.theme,
             "preferences.notifications_enabled": preferences.notifications_enabled,
             "preferences.auto_paste_enabled": preferences.auto_paste_enabled,

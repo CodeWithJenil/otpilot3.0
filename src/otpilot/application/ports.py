@@ -148,3 +148,4 @@ class DaemonStatus:
     pid: int | None = None
     autostart_enabled: bool = False
     error: str | None = None
+    state: str | None = None

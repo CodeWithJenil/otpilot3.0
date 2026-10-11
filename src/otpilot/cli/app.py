@@ -10,7 +10,7 @@ import typer
 from otpilot import __version__
 from otpilot.application.settings import SettingsService
 from otpilot.application.telemetry import create_telemetry_adapter, is_command_allowed_for_telemetry
-from otpilot.cli.commands import config, daemon, doctor, fetch, hotkey, login, logout, telemetry, watch
+from otpilot.cli.commands import config, daemon, doctor, fetch, login, logout, telemetry, watch
 from otpilot.infrastructure.config_storage.toml import TomlConfigurationRepository
 from otpilot.infrastructure.preferences.toml import TomlPreferencesRepository
 from otpilot.preferences.models import UserPreferences
@@ -195,7 +195,6 @@ app = TelemetryTyper(
 )
 app.command("fetch")(fetch.command)
 app.command("watch")(watch.command)
-app.command("hotkey")(hotkey.command)
 app.command("login")(login.command)
 app.command("logout")(logout.command)
 app.add_typer(config.app, name="config")
@@ -212,3 +211,7 @@ def version() -> None:
 
 def main() -> None:
     app()
+
+
+if __name__ == "__main__":
+    main()

@@ -12,7 +12,7 @@ Current model:
 - `provider.account`: active account email. Default: unset.
 - `credential_backend.backend`: credential backend. Default: `keyring`.
 - `config_dir`: override for local config path. Default: platform-specific.
-- `poll_interval_seconds`: watch polling interval. Default: `30.0`; allowed range is greater than 0 and up to 3600 seconds.
+- `poll_interval_seconds`: watch polling interval. Default: `3.0`; allowed range is greater than 0 and up to 3600 seconds.
 - `hotkey`: global hotkey for `otpilot hotkey`. Default: `ctrl+shift+o` (or `cmd+shift+o` on macOS). It must be a non-empty, plus-separated key combination with at least one modifier (`ctrl`, `shift`, `alt`, `cmd`) and a non-modifier key; for example, `cmd+shift+o` or `alt+f9`.
 
 Secrets are forbidden in configuration files.

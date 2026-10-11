@@ -211,7 +211,7 @@ class TestSettingsMenu:
                 key="poll_interval_seconds",
                 label="Poll Interval",
                 description="",
-                current_value="30.0",
+                current_value="3.0",
                 item_type="setting",
             )
         ]
@@ -227,7 +227,7 @@ class TestSettingsMenu:
         console.print(menu.render())
         output = console.file.getvalue()
         assert "Poll Interval" in output
-        assert "30.0" in output
+        assert "3.0" in output
         assert "system" in output
 
 

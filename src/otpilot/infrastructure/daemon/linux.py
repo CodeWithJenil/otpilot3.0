@@ -135,9 +135,11 @@ WantedBy=default.target
             return False
 
     def _cleanup_stale_fallback_pid(self) -> None:
-        """Remove stale fallback PID file if process is not running."""
+        """Remove stale fallback PID file if process is not running or file is invalid."""
+        if not self.FALLBACK_PID_FILE.exists():
+            return
         pid = self._get_pid_fallback()
-        if pid is not None and not self._is_process_running(pid):
+        if pid is None or not self._is_process_running(pid):
             self._clear_pid_fallback()
 
     def install(self, autostart: bool = False) -> None:
