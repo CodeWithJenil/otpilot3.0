@@ -48,11 +48,11 @@ async function setupDatabase() {
     for (const stmt of statements) {
       try {
         await sql.unsafe(stmt);
-        console.log('  ✓ Executed:', stmt.substring(0, 60).replace('\n', ' ') + '...');
+        console.log('  ✓ Executed:', stmt.substring(0, 60).replace(/\n/g, ' ') + '...');
       } catch (err) {
         // Ignore "already exists" errors
         if (err instanceof Error && err.message.includes('already exists')) {
-          console.log('  ⏭  Skipped (already exists):', stmt.substring(0, 60).replace('\n', ' ') + '...');
+          console.log('  ⏭  Skipped (already exists):', stmt.substring(0, 60).replace(/\n/g, ' ') + '...');
         } else {
           throw err;
         }
