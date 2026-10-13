@@ -2,86 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 240 6% 4%;
-    --foreground: 60 5% 90%;
+/* Custom CSS variables for the design system */
+:root {
+  --background: 240 6% 4%;
+  --foreground: 60 5% 90%;
 
-    --card: 240 4% 8%;
-    --card-foreground: 60 5% 90%;
+  --card: 240 4% 8%;
+  --card-foreground: 60 5% 90%;
 
-    --popover: 240 4% 8%;
-    --popover-foreground: 60 5% 90%;
+  --popover: 240 4% 8%;
+  --popover-foreground: 60 5% 90%;
 
-    --primary: 152 100% 50%;
-    --primary-foreground: 240 6% 4%;
+  --primary: 152 100% 50%;
+  --primary-foreground: 240 6% 4%;
 
-    --secondary: 240 4% 12%;
-    --secondary-foreground: 60 5% 90%;
+  --secondary: 240 4% 12%;
+  --secondary-foreground: 60 5% 90%;
 
-    --muted: 240 3% 18%;
-    --muted-foreground: 240 3% 55%;
+  --muted: 240 3% 18%;
+  --muted-foreground: 240 3% 55%;
 
-    --accent: 152 100% 50%;
-    --accent-foreground: 240 6% 4%;
+  --accent: 152 100% 50%;
+  --accent-foreground: 240 6% 4%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 60 5% 90%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 60 5% 90%;
 
-    --border: 240 3% 18%;
-    --input: 240 3% 18%;
-    --ring: 152 100% 50%;
+  --border: 240 3% 18%;
+  --input: 240 3% 18%;
+  --ring: 152 100% 50%;
 
-    --radius: 0.5rem;
-
-    --sidebar-background: 240 6% 4%;
-    --sidebar-foreground: 60 5% 90%;
-    --sidebar-primary: 152 100% 50%;
-    --sidebar-primary-foreground: 240 6% 4%;
-    --sidebar-accent: 240 4% 12%;
-    --sidebar-accent-foreground: 60 5% 90%;
-    --sidebar-border: 240 3% 18%;
-    --sidebar-ring: 152 100% 50%;
-  }
-
-  .dark {
-    --background: 240 6% 4%;
-    --foreground: 60 5% 90%;
-    --card: 240 4% 8%;
-    --card-foreground: 60 5% 90%;
-    --popover: 240 4% 8%;
-    --popover-foreground: 60 5% 90%;
-    --primary: 152 100% 50%;
-    --primary-foreground: 240 6% 4%;
-    --secondary: 240 4% 12%;
-    --secondary-foreground: 60 5% 90%;
-    --muted: 240 3% 18%;
-    --muted-foreground: 240 3% 55%;
-    --accent: 152 100% 50%;
-    --accent-foreground: 240 6% 4%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 60 5% 90%;
-    --border: 240 3% 18%;
-    --input: 240 3% 18%;
-    --ring: 152 100% 50%;
-  }
+  --radius: 0.5rem;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground font-body antialiased;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-mono;
-  }
+.dark {
+  --background: 240 6% 4%;
+  --foreground: 60 5% 90%;
+  --card: 240 4% 8%;
+  --card-foreground: 60 5% 90%;
+  --popover: 240 4% 8%;
+  --popover-foreground: 60 5% 90%;
+  --primary: 152 100% 50%;
+  --primary-foreground: 240 6% 4%;
+  --secondary: 240 4% 12%;
+  --secondary-foreground: 60 5% 90%;
+  --muted: 240 3% 18%;
+  --muted-foreground: 240 3% 55%;
+  --accent: 152 100% 50%;
+  --accent-foreground: 240 6% 4%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 60 5% 90%;
+  --border: 240 3% 18%;
+  --input: 240 3% 18%;
+  --ring: 152 100% 50%;
 }
 
-/* Grain overlay */
 .grain-overlay {
   position: fixed;
   inset: 0;
@@ -128,6 +103,11 @@
 
 .cursor-blink {
   animation: blink 1s step-end infinite;
+  font-family: 'JetBrains Mono', monospace;
+  color: hsl(152 100% 50%);
+  font-size: 20px;
+  line-height: 1;
+  text-shadow: 0 0 8px hsl(152 100% 50% / 0.6);
 }
 
 /* Custom cursor */
@@ -140,7 +120,6 @@
   font-size: 20px;
   line-height: 1;
   animation: blink 1s step-end infinite;
-  text-shadow: 0 0 8px hsl(152 100% 50% / 0.6);
 }
 
 /* Scroll reveal */
