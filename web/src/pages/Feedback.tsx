@@ -81,14 +81,7 @@ const Feedback = () => {
 
   const versionFromUrl = searchParams.get("version") || "";
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-    watch,
-    setValue,
-  } = useForm<FeedbackFormData>({
+  const form = useForm<FeedbackFormData>({
     resolver: zodResolver(feedbackSchema),
     defaultValues: {
       feedback_type: "general",
@@ -100,6 +93,16 @@ const Feedback = () => {
       python_version: "",
     },
   });
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+    watch,
+    setValue,
+  } = form;
+
 
   const watchedFeedbackType = watch("feedback_type");
   const watchedRating = watch("rating");
@@ -168,8 +171,7 @@ const Feedback = () => {
             </Button>
           </div>
         </div>
-      </LegalLayout>
-    );
+      </LegalLayout>)
   }
 
   return (
@@ -203,18 +205,18 @@ const Feedback = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Form {...register}>
+            <Form {...form}>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Feedback Type */}
                 <FormField
-                  control={register}
+                  control={form.control}
                   name="feedback_type"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Feedback Type <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value: string) => field.onChange!(value)}
                           defaultValue={field.value}
                         >
                           <SelectTrigger className={cn(errors.feedback_type && "border-destructive")}>
@@ -239,7 +241,7 @@ const Feedback = () => {
 
                 {/* Rating */}
                 <FormField
-                  control={register}
+                  control={form.control}
                   name="rating"
                   render={({ field }) => (
                     <FormItem>
@@ -249,7 +251,7 @@ const Feedback = () => {
                       </FormDescription>
                       <FormControl>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value: string | null) => field.onChange!(value)}
                           defaultValue={field.value}
                         >
                           <SelectTrigger className={cn(errors.rating && "border-destructive")}>
@@ -271,7 +273,7 @@ const Feedback = () => {
 
                 {/* Feedback Text */}
                 <FormField
-                  control={register}
+                  control={form.control}
                   name="feedback"
                   render={({ field }) => (
                     <FormItem>
@@ -294,7 +296,7 @@ const Feedback = () => {
 
                 {/* Email */}
                 <FormField
-                  control={register}
+                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -317,7 +319,7 @@ const Feedback = () => {
 
                 {/* Hidden/Pre-filled fields */}
                 <FormField
-                  control={register}
+                  control={form.control}
                   name="otpilot_version"
                   render={({ field }) => (
                     <FormItem className="hidden">
@@ -328,7 +330,7 @@ const Feedback = () => {
                   )}
                 />
                 <FormField
-                  control={register}
+                  control={form.control}
                   name="operating_system"
                   render={({ field }) => (
                     <FormItem className="hidden">
@@ -339,7 +341,7 @@ const Feedback = () => {
                   )}
                 />
                 <FormField
-                  control={register}
+                  control={form.control}
                   name="python_version"
                   render={({ field }) => (
                     <FormItem className="hidden">
@@ -388,7 +390,6 @@ const Feedback = () => {
         </div>
       </div>
     </LegalLayout>
-  );
-};
-
+);
+}
 export default Feedback;
